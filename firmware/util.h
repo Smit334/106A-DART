@@ -34,12 +34,15 @@ struct {
 /* PINOUT (for Teensy 4.1)  */
 
 /* PWM (motor control)*/
-const uint32_t PWM_FLY[] = { 2, 3, 4, 5 };
-const uint32_t PWM_DRIVE[] = { 6, 7, 8, 9 };
+const uint32_t MOTORS[] = { 2, 3, 4, 5 };
 
 /* DIGITAL (ultrasonic)*/
 const uint32_t US_TRIG[] = { 33, 34, 35, 36 };
 const uint32_t US_ECHO[] = { 37, 38, 39, 40 };
+
+float dt;
+uint32_t currTime;
+uint32_t prevTime;
 
 inline float deg2rad(float deg) {
     return deg * 0.0174533f;

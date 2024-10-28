@@ -1,6 +1,6 @@
 #include "flightController.h"
 
-void Madgwick6DOF(IMUData *imu, float invSampleFreq, RPYAngles *angles) {
+void Madgwick6DOF(IMUData *imu, float dt, RPYAngles *angles) {
   //DESCRIPTION: Attitude estimation through sensor fusion - 6DOF
   /*
    * See description of Madgwick() for more information. This is a 6DOF implimentation for when magnetometer data is not
@@ -64,10 +64,10 @@ void Madgwick6DOF(IMUData *imu, float invSampleFreq, RPYAngles *angles) {
   }
 
   //Integrate rate of change of quaternion to yield quaternion
-  q0 += qDot1 * invSampleFreq;
-  q1 += qDot2 * invSampleFreq;
-  q2 += qDot3 * invSampleFreq;
-  q3 += qDot4 * invSampleFreq;
+  q0 += qDot1 * dt;
+  q1 += qDot2 * dt;
+  q2 += qDot3 * dt;
+  q3 += qDot4 * dt;
 
   //Normalise quaternion
   recipNorm = invSqrt(q0 * q0 + q1 * q1 + q2 * q2 + q3 * q3);
@@ -98,27 +98,27 @@ void controlANGLE(IMUData *imu, RPYAngles *actual, RPYAngles *des, float throttl
   //Roll
   float error_roll = des->roll - actual->roll;
   float integral_roll = integral_roll_prev + error_roll*dt;
-  if (throttle < 1060) {   //Don't let integrator build if throttle is too low
+  if (throttle < MIN_THROTTLE) {   //Don't let integrator build if throttle is too low
     integral_roll = 0;
   }
   integral_roll = constrain(integral_roll, -i_limit, i_limit); //Saturate integrator to prevent unsafe buildup
   float derivative_roll = imu->GYR_X;
-  pid->roll = 0.01*(Kp_roll_angle*error_roll + Ki_roll_angle*integral_roll - Kd_roll_angle*derivative_roll); //Scaled by .01 to bring within -1 to 1 range
+  pid->roll = 0.01*(Kp_roll*error_roll + Ki_roll*integral_roll - Kd_roll*derivative_roll); //Scaled by .01 to bring within -1 to 1 range
 
   //Pitch
   float error_pitch = des->pitch - actual->pitch;
   float integral_pitch = integral_pitch_prev + error_pitch*dt;
-  if (throttle < 1060) {   //Don't let integrator build if throttle is too low
+  if (throttle < MIN_THROTTLE) {   //Don't let integrator build if throttle is too low
     integral_pitch = 0;
   }
   integral_pitch = constrain(integral_pitch, -i_limit, i_limit); //Saturate integrator to prevent unsafe buildup
   float derivative_pitch = imu->GYR_Y;
-  pid->pitch = .01*(Kp_pitch_angle*error_pitch + Ki_pitch_angle*integral_pitch - Kd_pitch_angle*derivative_pitch); //Scaled by .01 to bring within -1 to 1 range
+  pid->pitch = .01*(Kp_pitch*error_pitch + Ki_pitch*integral_pitch - Kd_pitch*derivative_pitch); //Scaled by .01 to bring within -1 to 1 range
 
   //Yaw, stablize on rate from GyroZ
   float error_yaw = des->yaw - imu->GYR_Z;
   float integral_yaw = integral_yaw_prev + error_yaw*dt;
-  if (throttle < 1060) {   //Don't let integrator build if throttle is too low
+  if (throttle < MIN_THROTTLE) {   //Don't let integrator build if throttle is too low
     integral_yaw = 0;
   }
   integral_yaw = constrain(integral_yaw, -i_limit, i_limit); //Saturate integrator to prevent unsafe buildup

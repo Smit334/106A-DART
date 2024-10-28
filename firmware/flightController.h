@@ -1,6 +1,6 @@
 #include "util.h"
 
-float dt;
+#define MIN_THROTTLE 1060
 
 float q0 = 1.0f; //Initialize quaternion for madgwick filter
 float q1 = 0.0f;
@@ -23,17 +23,17 @@ float maxRoll = 30.0;     //Max roll angle in degrees for angle mode (maximum ~7
 float maxPitch = 30.0;    //Max pitch angle in degrees for angle mode (maximum ~70 degrees), deg/sec for rate mode
 float maxYaw = 160.0;     //Max yaw rate in deg/sec
 
-float Kp_roll_angle = 0.2;    //Roll P-gain - angle mode 
-float Ki_roll_angle = 0.3;    //Roll I-gain - angle mode
-float Kd_roll_angle = 0.05;   //Roll D-gain - angle mode (has no effect on controlANGLE2)
-float Kp_pitch_angle = 0.2;   //Pitch P-gain - angle mode
-float Ki_pitch_angle = 0.3;   //Pitch I-gain - angle mode
-float Kd_pitch_angle = 0.05;  //Pitch D-gain - angle mode (has no effect on controlANGLE2)
+float Kp_roll = 0.2;    //Roll P-gain - angle mode 
+float Ki_roll = 0.3;    //Roll I-gain - angle mode
+float Kd_roll = 0.05;   //Roll D-gain - angle mode (has no effect on controlANGLE2)
+float Kp_pitch = 0.2;   //Pitch P-gain - angle mode
+float Ki_pitch = 0.3;   //Pitch I-gain - angle mode
+float Kd_pitch = 0.05;  //Pitch D-gain - angle mode (has no effect on controlANGLE2)
 
 float Kp_yaw = 0.3;           //Yaw P-gain
 float Ki_yaw = 0.05;          //Yaw I-gain
 float Kd_yaw = 0.00015;       //Yaw D-gain (be careful when increasing too high, motors will begin to overheat!)
 
-void Madgwick6DOF(IMUData *imu, float invSampleFreq, RPYAngles *angles);
+void Madgwick6DOF(IMUData *imu, float dt, RPYAngles *angles);
 void controlANGLE(IMUData *imu, RPYAngles *actual, RPYAngles *des, float throttle, RPYAngles *pid);
 void controlMixer(RPYAngles *pid, float throttle, MotorCommands *cmds);
