@@ -1,17 +1,20 @@
 #include <Wire.h>
+#include <SPI.h>
+#include <nRF24L01.h>
+#include <RF24.h>
+
 #include "util.h"
 #include "flightController.h"
-
-bool isFlightMode;
 
 IMUData imu;
 float ultrasonicInches[NUM_MOTORS];
 RPYAngles position;
-RPYAngles des;
-float throttle;
 RPYAngles pid;
 MotorCommands cmds;
 float arcadePower[2];
+RadioPacket packet;
+
+RF24 radio(RADIO_CE_PIN, RADIO_CSN_PIN);
 
 void setup() {
   Serial.begin(115200);
@@ -24,6 +27,13 @@ void setup() {
   Wire.write(IMU_INIT_ADDR);
   Wire.write(IMU_INIT_VALUE);
   Wire.endTransmission(false);
+
+  /* Initialize radio (over SPI) */
+  radio.begin();
+  radio.setPALevel(RF24_PA_HIGH);
+  radio.setChannel(110);
+  radio.openReadingPipe(1, PIPE);
+  radio.startListening();
 
   /* Initialize pin modes for pin types with channels. */
   for (uint32_t ch = 0; ch < NUM_MOTORS; ++ch) {
@@ -42,13 +52,13 @@ void loop() {
   for (uint32_t ch = 0; ch < NUM_MOTORS; ++ch) {
     ultrasonicInches[ch] = readUltrasonicInches(ch);
   }
-  readRadio(&des, &throttle); //TODO
+  radio.read(&packet, sizeof(packet));
 
   if (isFlightMode) {
-    controlANGLE(&imu, &position, throttle, &pid);
-    controlMixer(&pid, throttle, &cmds);
+    controlANGLE(&imu, &position, &packet.des, packet.throttle, &pid);
+    controlMixer(&pid, packet.throttle, &cmds);
   } else {
-    arcadeDrive(des->roll, throttle, &arcadePower);
+    arcadeDrive(packet.des->roll, packet.throttle, &arcadePower);
     driveControlMixer(&arcadePower, &cmds);
   }
   sendMotorCommands(&cmds);
@@ -118,10 +128,6 @@ void readIMU(IMUData *data) {
   data->GYR_X = readNextIMUReg();
   data->GYR_Y = readNextIMUReg();
   data->GYR_Z = readNextIMUReg();
-}
-
-void readRadio(RPYAngles *des, float *throttle) {
-  // TODO read radio; highly implementation dependent
 }
 
 /**
