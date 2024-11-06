@@ -3,8 +3,10 @@
 #include <nRF24L01.h>
 #include <RF24.h>
 
-#include "util.h"
-#include "flightController.h"
+extern "C" {
+  #include "util.h"
+  #include "flightController.h"
+}
 
 IMUData imu;
 float ultrasonicInches[NUM_MOTORS];
@@ -19,30 +21,30 @@ RF24 radio(RADIO_CE_PIN, RADIO_CSN_PIN);
 void setup() {
   Serial.begin(115200);
 
-  initConstants();
+  // initConstants();
 
   /* Initialize I2C. Automatically uses default I2C; SDA=18 and SCL=19 */
   Wire.begin();
 
   /* Initialize IMU (over I2C) */
-  // Wire.beginTransmission(IMU_I2C_ADDR);
-  // Wire.write(IMU_INIT_ADDR);
-  // Wire.write(IMU_INIT_VALUE);
-  // Wire.endTransmission(false);
+  Wire.beginTransmission(IMU_I2C_ADDR);
+  Wire.write(IMU_INIT_ADDR);
+  Wire.write(IMU_INIT_VALUE);
+  Wire.endTransmission(false);
 
   /* Initialize radio (over SPI) */
-  // radio.begin();
-  // radio.setPALevel(RF24_PA_HIGH);
-  // radio.setChannel(110);
-  // radio.openReadingPipe(1, PIPE);
-  // radio.startListening();
+  radio.begin();
+  radio.setPALevel(RF24_PA_HIGH);
+  radio.setChannel(110);
+  radio.openReadingPipe(1, PIPE);
+  radio.startListening();
 
   /* Initialize pin modes for pin types with channels. */
   for (uint32_t ch = 0; ch < NUM_MOTORS; ++ch) {
     pinMode(MOTORS[ch], OUTPUT);
     analogWriteFrequency(MOTORS[ch], PWM_FREQ_HZ);
-    // pinMode(US_TRIG[ch], OUTPUT);
-    // pinMode(US_ECHO[ch], INPUT);
+    pinMode(US_TRIG[ch], OUTPUT);
+    pinMode(US_ECHO[ch], INPUT);
   }
 
   packet.isFlightMode = false;
@@ -51,26 +53,24 @@ void setup() {
 void loop() {
   trackLoopTime();
 
-  // readIMU(&imu);
-  // Madgwick6DOF(&imu, dt, &position);
-  // for (uint32_t ch = 0; ch < NUM_MOTORS; ++ch) {
-  //   ultrasonicInches[ch] = readUltrasonicInches(ch);
-  // }
-  // radio.read(&packet, sizeof(packet));
+  readIMU(&imu);
+  Madgwick6DOF(&imu, &position);
+  for (uint32_t ch = 0; ch < NUM_MOTORS; ++ch) {
+    ultrasonicInches[ch] = readUltrasonicInches(ch);
+  }
+  radio.read(&packet, sizeof(packet));
 
   if (packet.isFlightMode) {
     controlANGLE(&imu, &position, &packet.des, packet.throttle, &pid);
     controlMixer(&pid, packet.throttle, &cmds);
   } else {
-    // arcadeDrive(packet.des->roll, packet.throttle, &arcadePower);
-    arcadePower[0] = 0.05;
-    arcadePower[1] = 0.05;
+    arcadeDrive(packet.des.roll, packet.throttle, arcadePower);
     driveControlMixer(arcadePower, &cmds);
   }
   sendMotorCommands(&cmds);
   clearMotorCommands(&cmds);
 
-  limitLoopRate(2000);
+  limitLoopRate();
 }
 
 /**

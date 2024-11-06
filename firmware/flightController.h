@@ -1,5 +1,5 @@
-// #ifndef FLIGHTCONTROLLER_H
-// #define FLIGHTCONTROLLER_H
+#ifndef FLIGHTCONTROLLER_H
+#define FLIGHTCONTROLLER_H
 
 #include "util.h"
 
@@ -27,30 +27,14 @@ const float Kp_yaw = 0.3;           //Yaw P-gain
 const float Ki_yaw = 0.05;          //Yaw I-gain
 const float Kd_yaw = 0.00015;       //Yaw D-gain (be careful when increasing too high, motors will begin to overheat!)
 
-float q0; //Initialize quaternion for madgwick filter
-float q1;
-float q2;
-float q3;
+void initConstants(void);
 
-//Normalized desired state:
-float thro_des, roll_des, pitch_des, yaw_des;
-float roll_passthru, pitch_passthru, yaw_passthru;
-
-//Controller:
-float integral_yaw_prev, integral_pitch_prev, error_yaw_prev, integral_roll_prev;
-
-float dt;
-uint32_t currTime;
-uint32_t prevTime;
-
-void initConstants();
-
-void Madgwick6DOF(IMUData *imu, float dt, RPYAngles *angles);
+void Madgwick6DOF(IMUData *imu, RPYAngles *angles);
 void controlANGLE(IMUData *imu, RPYAngles *actual, RPYAngles *des, float throttle, RPYAngles *pid);
 void controlMixer(RPYAngles *pid, float throttle, MotorCommands *cmds);
 float invSqrt(float value);
 
-void trackLoopTime();
-void limitLoopRate()
+void trackLoopTime(void);
+void limitLoopRate(void);
 
-// #endif /* FLIGHTCONTROLLER_H */
+#endif /* FLIGHTCONTROLLER_H */

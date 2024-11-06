@@ -1,13 +1,29 @@
 #include "flightController.h"
 
-void initConstants() {
+float q0; //Initialize quaternion for madgwick filter
+float q1;
+float q2;
+float q3;
+
+//Normalized desired state:
+float thro_des, roll_des, pitch_des, yaw_des;
+float roll_passthru, pitch_passthru, yaw_passthru;
+
+//Controller:
+float integral_yaw_prev, integral_pitch_prev, error_yaw_prev, integral_roll_prev;
+
+float dt;
+uint32_t currTime;
+uint32_t prevTime;
+
+void initConstants(void) {
   q0 = 1.0f;
   q1 = 0.0f;
   q2 = 0.0f;
   q3 = 0.0f;
 }
 
-void Madgwick6DOF(IMUData *imu, float dt, RPYAngles *angles) {
+void Madgwick6DOF(IMUData *imu, RPYAngles *angles) {
   //DESCRIPTION: Attitude estimation through sensor fusion - 6DOF
   /*
    * See description of Madgwick() for more information. This is a 6DOF implimentation for when magnetometer data is not
@@ -152,12 +168,12 @@ float invSqrt(float value) {
   return 1.0 / sqrt(value);
 }
 
-void trackLoopTime() {
+void trackLoopTime(void) {
   prevTime = currTime;
   currTime = micros();
   dt = (currTime - prevTime) / 1000000.0;
 }
 
-void limitLoopRate() {
-  delayMicroseconds(freqHz - (micros() - currTime));
+void limitLoopRate(void) {
+  delayMicroseconds(LOOP_RATE_HZ - (micros() - currTime));
 }

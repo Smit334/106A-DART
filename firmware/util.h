@@ -3,33 +3,33 @@
 
 #include <Arduino.h>
 
-struct {
+typedef struct {
   uint16_t ACC_X;
   uint16_t ACC_Y;
   uint16_t ACC_Z;
   uint16_t GYR_X;
   uint16_t GYR_Y;
   uint16_t GYR_Z;
-} typedef IMUData;
+} IMUData;
 
-struct {
+typedef struct {
   float yaw;
   float pitch;
   float roll;
-} typedef RPYAngles;
+} RPYAngles;
 
-struct {
+typedef struct {
   float frontLeft;
   float frontRight;
   float backRight;
   float backLeft;
-} typedef MotorCommands;
+} MotorCommands;
 
-struct {
+typedef struct {
   RPYAngles des;
   float throttle;
   bool isFlightMode;
-} typedef RadioPacket;
+} RadioPacket;
 
 #define IMU_I2C_ADDR 0x68
 #define IMU_DATA_REG_START_ADDR 0x03
@@ -43,6 +43,8 @@ struct {
 #define NUM_MOTORS 4
 #define PWM_FREQ_HZ 60  /* Increase from default 4.482 kHz */
 
+#define LOOP_RATE_HZ 2000
+
 /* PINOUT (for Teensy 4.1)  */
 
 /* PWM (motor control)*/
@@ -54,6 +56,9 @@ const uint32_t US_ECHO[] = { 28, 29, 30, 31, 32 };
 
 // NOTE: the "LL" at the end of the constant is "LongLong" type
 const uint64_t PIPE = 0xE8E8F0F0E1LL; // Define the transmit pipe
+
+void trackLoopTime(void);
+void limitLoopRate(void);
 
 inline float deg2rad(float deg) {
     return deg * 0.0174533f;
