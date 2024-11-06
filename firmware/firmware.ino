@@ -5,6 +5,7 @@
 
 extern "C" {
   #include "util.h"
+  #include "sensors.h"
   #include "flightController.h"
   #include "driveController.h"
 }
@@ -62,7 +63,7 @@ void loop() {
   readIMU(&imu);
   Madgwick6DOF(&imu, &position);
   for (uint32_t ch = 0; ch < NUM_MOTORS; ++ch) {
-    ultrasonicInches[ch] = readUltrasonicInches(ch);
+    ultrasonicInches[ch] = usToInches(readUltrasonicAveraged(ch));
   }
   radio.read(&packet, sizeof(packet));
 
@@ -78,21 +79,6 @@ void loop() {
   clearMotorCommands(&cmds);
 
   limitLoopRate();
-}
-
-/**
- * Read ultrasonic sensor CH and return the measured distance in inches.
- *
- * @param ch the channel of the sensor to collect a measurement from
- * @return the reading of the ultrasonic sensor, in inches
- */
-uint32_t readUltrasonicInches(uint32_t ch) {
-  digitalWrite(US_TRIG[ch], LOW);
-  delayMicroseconds(2);  /* Ensure pin is reset */
-  digitalWrite(US_TRIG[ch], HIGH);
-  delayMicroseconds(10);  /* 10us delay to start module */
-  digitalWrite(US_TRIG[ch], LOW);
-  return pulseIn(US_ECHO[ch], HIGH) / 58.0;
 }
 
 /**
