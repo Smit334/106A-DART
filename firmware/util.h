@@ -3,6 +3,21 @@
 
 #include <Arduino.h>
 
+#define IMU_I2C_ADDR 0x68
+#define IMU_DATA_REG_START_ADDR 0x03
+#define IMU_INIT_ADDR 0x20
+#define IMU_INIT_VALUE 0x4000 | 0x0000 | 0x0000 | 0x0020 | 0x0007
+
+// TODO make sure these are correct (I do not think they are)
+#define RADIO_CE_PIN 9
+#define RADIO_CSN_PIN 10
+
+#define NUM_MOTORS 4
+#define NUM_US 5
+#define PWM_FREQ_HZ 490
+
+#define LOOP_RATE_HZ 2000
+
 typedef struct {
   uint16_t ACC_X;
   uint16_t ACC_Y;
@@ -31,37 +46,28 @@ typedef struct {
   bool isFlightMode;
 } RadioPacket;
 
-#define IMU_I2C_ADDR 0x68
-#define IMU_DATA_REG_START_ADDR 0x03
-#define IMU_INIT_ADDR 0x20
-#define IMU_INIT_VALUE 0x4000 | 0x0000 | 0x0000 | 0x0020 | 0x0007
+/* Loop timing */
+extern float dt;
+extern uint32_t currTime;
+extern uint32_t prevTime;
 
-// TODO make sure these are correct (I do not think they are)
-#define RADIO_CE_PIN 9
-#define RADIO_CSN_PIN 10
-
-#define NUM_MOTORS 4
-#define PWM_FREQ_HZ 60  /* Increase from default 4.482 kHz */
-
-#define LOOP_RATE_HZ 2000
-
-/* PINOUT (for Teensy 4.1)  */
-
-/* PWM (motor control)*/
-const uint32_t MOTORS[] = { 6, 9, 10, 11 }; //{ 0, 1, 3, 2 };
+/* PWM (motor/servo control)*/
+extern const uint32_t FLY_MOTORS[NUM_MOTORS];
+extern const uint32_t DRIVE_SERVOS[NUM_MOTORS]; // TODO fill in
+extern const uint32_t TRANSITION_SERVOS[2]; // TODO fill in
 
 /* DIGITAL (ultrasonic)*/
-const uint32_t US_TRIG[] = { 4, 5, 6, 7, 8 };
-const uint32_t US_ECHO[] = { 28, 29, 30, 31, 32 };
+extern const uint32_t US_TRIG[NUM_US];
+extern const uint32_t US_ECHO[NUM_US];
 
-// NOTE: the "LL" at the end of the constant is "LongLong" type
-const uint64_t PIPE = 0xE8E8F0F0E1LL; // Define the transmit pipe
+/* RADIO (nRF24L01) */
+extern const uint64_t PIPE;
 
 void trackLoopTime(void);
 void limitLoopRate(void);
 
 inline float deg2rad(float deg) {
-    return deg * 0.0174533f;
+  return deg * 0.0174533f;
 }
 
 #endif /* UTIL_H */

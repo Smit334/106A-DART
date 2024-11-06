@@ -12,10 +12,6 @@ float roll_passthru, pitch_passthru, yaw_passthru;
 //Controller:
 float integral_yaw_prev, integral_pitch_prev, error_yaw_prev, integral_roll_prev;
 
-float dt;
-uint32_t currTime;
-uint32_t prevTime;
-
 void initConstants(void) {
   q0 = 1.0f;
   q1 = 0.0f;
@@ -158,22 +154,12 @@ void controlANGLE(IMUData *imu, RPYAngles *actual, RPYAngles *des, float throttl
 }
 
 void controlMixer(RPYAngles *pid, float throttle, MotorCommands *cmds) {
-    cmds->frontLeft = throttle - pid->pitch + pid->roll + pid->yaw; //Front Left
-    cmds->frontRight = throttle - pid->pitch - pid->roll - pid->yaw; //Front Right
-    cmds->backRight = throttle + pid->pitch - pid->roll + pid->yaw; //Back Right
-    cmds->backLeft = throttle + pid->pitch + pid->roll - pid->yaw; //Back Left
+  cmds->frontLeft = throttle - pid->pitch + pid->roll + pid->yaw; //Front Left
+  cmds->frontRight = throttle - pid->pitch - pid->roll - pid->yaw; //Front Right
+  cmds->backRight = throttle + pid->pitch - pid->roll + pid->yaw; //Back Right
+  cmds->backLeft = throttle + pid->pitch + pid->roll - pid->yaw; //Back Left
 }
 
 float invSqrt(float value) {
   return 1.0 / sqrt(value);
-}
-
-void trackLoopTime(void) {
-  prevTime = currTime;
-  currTime = micros();
-  dt = (currTime - prevTime) / 1000000.0;
-}
-
-void limitLoopRate(void) {
-  delayMicroseconds(LOOP_RATE_HZ - (micros() - currTime));
 }

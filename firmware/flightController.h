@@ -3,7 +3,7 @@
 
 #include "util.h"
 
-#define MIN_THROTTLE 1060
+const uint32_t MIN_THROTTLE = 1060;
 
 const uint32_t LOOP_FREQ_HZ = 2000;
 
@@ -33,8 +33,5 @@ void Madgwick6DOF(IMUData *imu, RPYAngles *angles);
 void controlANGLE(IMUData *imu, RPYAngles *actual, RPYAngles *des, float throttle, RPYAngles *pid);
 void controlMixer(RPYAngles *pid, float throttle, MotorCommands *cmds);
 float invSqrt(float value);
-
-void trackLoopTime(void);
-void limitLoopRate(void);
 
 #endif /* FLIGHTCONTROLLER_H */
