@@ -160,6 +160,6 @@ void controlMixer(RPYAngles *pid, float throttle, MotorCommands *cmds) {
   cmds->backLeft = throttle + pid->pitch + pid->roll - pid->yaw; //Back Left
 }
 
-float invSqrt(float value) {
+inline float invSqrt(float value) {
   return 1.0 / sqrt(value);
 }

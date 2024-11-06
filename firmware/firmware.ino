@@ -73,7 +73,8 @@ void loop() {
     arcadeDrive(packet.des.roll, packet.throttle, arcadePower);
     driveControlMixer(arcadePower, &cmds);
   }
-  sendMotorCommands(&cmds);
+  
+  sendMotorCommands(&cmds, packet.isFlightMode);
   clearMotorCommands(&cmds);
 
   limitLoopRate();
@@ -132,11 +133,19 @@ void readIMU(IMUData *data) {
   data->GYR_Z = readNextIMUReg();
 }
 
-void sendMotorCommands(MotorCommands *cmds) {
+
+void sendMotorCommands(MotorCommands *cmds, bool isFlightMode) {
   float cmd;
-  for (uint32_t ch = 0; ch < NUM_MOTORS; ++ch) {
-    cmd = *(&cmds->frontLeft + ch) * 255;
-    analogWrite(FLY_MOTORS[ch], floor(cmd));
+  if (isFlightMode) {
+    for (uint32_t ch = 0; ch < NUM_MOTORS; ++ch) {
+      cmd = *(&cmds->frontLeft + ch);
+      analogWrite(FLY_MOTORS[ch], FLY_PWM_MIN + (floor(cmd) * FLY_PWM_RANGE));
+    }
+  } else {
+    for (uint32_t ch = 0; ch < NUM_MOTORS; ++ch) {
+      cmd = *(&cmds->frontLeft + ch);
+      analogWrite(DRIVE_SERVOS[ch], floor(cmd));
+    }
   }
 }
 

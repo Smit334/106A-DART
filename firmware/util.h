@@ -14,6 +14,7 @@
 
 #define NUM_MOTORS 4
 #define NUM_US 5
+#define NUM_TSERVO 2
 #define PWM_FREQ_HZ 490
 
 #define LOOP_RATE_HZ 2000
@@ -53,8 +54,8 @@ extern uint32_t prevTime;
 
 /* PWM (motor/servo control)*/
 extern const uint32_t FLY_MOTORS[NUM_MOTORS];
-extern const uint32_t DRIVE_SERVOS[NUM_MOTORS]; // TODO fill in
-extern const uint32_t TRANSITION_SERVOS[2]; // TODO fill in
+extern const uint32_t DRIVE_SERVOS[NUM_MOTORS];
+extern const uint32_t TRANSITION_SERVOS[NUM_TSERVO];
 
 /* DIGITAL (ultrasonic)*/
 extern const uint32_t US_TRIG[NUM_US];

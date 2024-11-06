@@ -5,8 +5,8 @@ uint32_t currTime;
 uint32_t prevTime;
 
 const uint32_t FLY_MOTORS[NUM_MOTORS] = { 0, 1, 3, 2 };
-const uint32_t DRIVE_SERVOS[NUM_MOTORS] = {}; // TODO fill in
-const uint32_t TRANSITION_SERVOS[2] = {}; // TODO fill in
+const uint32_t DRIVE_SERVOS[NUM_MOTORS] = { 22, 23, 24, 25 }; // TODO fill in
+const uint32_t TRANSITION_SERVOS[NUM_TSERVO] = {}; // TODO fill in
 
 const uint32_t US_TRIG[NUM_US] = { 4, 5, 6, 7, 8 };
 const uint32_t US_ECHO[NUM_US] = { 28, 29, 30, 31, 32 };

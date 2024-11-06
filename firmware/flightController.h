@@ -4,8 +4,8 @@
 #include "util.h"
 
 const uint32_t MIN_THROTTLE = 1060;
-
-const uint32_t LOOP_FREQ_HZ = 2000;
+const uint8_t FLY_PWM_MIN = 175;
+const uint8_t FLY_PWM_RANGE = 80;
 
 //Filter parameters - Defaults tuned for 2kHz loop rate; Do not touch unless you know what you are doing:
 const float B_madgwick = 0.04;  //Madgwick filter parameter
