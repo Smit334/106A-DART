@@ -1,5 +1,12 @@
 #include "flightController.h"
 
+void initConstants() {
+  q0 = 1.0f;
+  q1 = 0.0f;
+  q2 = 0.0f;
+  q3 = 0.0f;
+}
+
 void Madgwick6DOF(IMUData *imu, float dt, RPYAngles *angles) {
   //DESCRIPTION: Attitude estimation through sensor fusion - 6DOF
   /*
@@ -139,4 +146,18 @@ void controlMixer(RPYAngles *pid, float throttle, MotorCommands *cmds) {
     cmds->frontRight = throttle - pid->pitch - pid->roll - pid->yaw; //Front Right
     cmds->backRight = throttle + pid->pitch - pid->roll + pid->yaw; //Back Right
     cmds->backLeft = throttle + pid->pitch + pid->roll - pid->yaw; //Back Left
+}
+
+float invSqrt(float value) {
+  return 1.0 / sqrt(value);
+}
+
+void trackLoopTime() {
+  prevTime = currTime;
+  currTime = micros();
+  dt = (currTime - prevTime) / 1000000.0;
+}
+
+void limitLoopRate() {
+  delayMicroseconds(freqHz - (micros() - currTime));
 }

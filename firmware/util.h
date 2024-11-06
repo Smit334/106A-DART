@@ -1,6 +1,7 @@
-typedef unsigned short uint16_t;
-typedef unsigned int uint32_t;
-typedef unsigned long uint64_t;
+#ifndef UTIL_H
+#define UTIL_H
+
+#include <Arduino.h>
 
 struct {
   uint16_t ACC_X;
@@ -25,7 +26,7 @@ struct {
 } typedef MotorCommands;
 
 struct {
-  RPYAngles rpy;
+  RPYAngles des;
   float throttle;
   bool isFlightMode;
 } typedef RadioPacket;
@@ -40,24 +41,22 @@ struct {
 #define RADIO_CSN_PIN 10
 
 #define NUM_MOTORS 4
-#define PWM_FREQ_HZ 25000  /* Increase from default 4.482 kHz */
+#define PWM_FREQ_HZ 60  /* Increase from default 4.482 kHz */
 
 /* PINOUT (for Teensy 4.1)  */
 
 /* PWM (motor control)*/
-const uint32_t MOTORS[] = { 2, 3, 4, 5 };
+const uint32_t MOTORS[] = { 6, 9, 10, 11 }; //{ 0, 1, 3, 2 };
 
 /* DIGITAL (ultrasonic)*/
-const uint32_t US_TRIG[] = { 33, 34, 35, 36 };
-const uint32_t US_ECHO[] = { 37, 38, 39, 40 };
+const uint32_t US_TRIG[] = { 4, 5, 6, 7, 8 };
+const uint32_t US_ECHO[] = { 28, 29, 30, 31, 32 };
 
 // NOTE: the "LL" at the end of the constant is "LongLong" type
 const uint64_t PIPE = 0xE8E8F0F0E1LL; // Define the transmit pipe
 
-float dt;
-uint32_t currTime;
-uint32_t prevTime;
-
 inline float deg2rad(float deg) {
     return deg * 0.0174533f;
 }
+
+#endif /* UTIL_H */

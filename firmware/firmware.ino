@@ -19,62 +19,58 @@ RF24 radio(RADIO_CE_PIN, RADIO_CSN_PIN);
 void setup() {
   Serial.begin(115200);
 
+  initConstants();
+
   /* Initialize I2C. Automatically uses default I2C; SDA=18 and SCL=19 */
   Wire.begin();
 
   /* Initialize IMU (over I2C) */
-  Wire.beginTransmission(IMU_I2C_ADDR);
-  Wire.write(IMU_INIT_ADDR);
-  Wire.write(IMU_INIT_VALUE);
-  Wire.endTransmission(false);
+  // Wire.beginTransmission(IMU_I2C_ADDR);
+  // Wire.write(IMU_INIT_ADDR);
+  // Wire.write(IMU_INIT_VALUE);
+  // Wire.endTransmission(false);
 
   /* Initialize radio (over SPI) */
-  radio.begin();
-  radio.setPALevel(RF24_PA_HIGH);
-  radio.setChannel(110);
-  radio.openReadingPipe(1, PIPE);
-  radio.startListening();
+  // radio.begin();
+  // radio.setPALevel(RF24_PA_HIGH);
+  // radio.setChannel(110);
+  // radio.openReadingPipe(1, PIPE);
+  // radio.startListening();
 
   /* Initialize pin modes for pin types with channels. */
   for (uint32_t ch = 0; ch < NUM_MOTORS; ++ch) {
     pinMode(MOTORS[ch], OUTPUT);
     analogWriteFrequency(MOTORS[ch], PWM_FREQ_HZ);
-    pinMode(US_TRIG[ch], OUTPUT);
-    pinMode(US_ECHO[ch], INPUT);
+    // pinMode(US_TRIG[ch], OUTPUT);
+    // pinMode(US_ECHO[ch], INPUT);
   }
+
+  packet.isFlightMode = false;
 }
 
 void loop() {
-  trackLoopTime(&prevTime, &currTime, &dt);
+  trackLoopTime();
 
-  readIMU(&imu);
-  Madgwick6DOF(&imu, dt, &position);
-  for (uint32_t ch = 0; ch < NUM_MOTORS; ++ch) {
-    ultrasonicInches[ch] = readUltrasonicInches(ch);
-  }
-  radio.read(&packet, sizeof(packet));
+  // readIMU(&imu);
+  // Madgwick6DOF(&imu, dt, &position);
+  // for (uint32_t ch = 0; ch < NUM_MOTORS; ++ch) {
+  //   ultrasonicInches[ch] = readUltrasonicInches(ch);
+  // }
+  // radio.read(&packet, sizeof(packet));
 
-  if (isFlightMode) {
+  if (packet.isFlightMode) {
     controlANGLE(&imu, &position, &packet.des, packet.throttle, &pid);
     controlMixer(&pid, packet.throttle, &cmds);
   } else {
-    arcadeDrive(packet.des->roll, packet.throttle, &arcadePower);
-    driveControlMixer(&arcadePower, &cmds);
+    // arcadeDrive(packet.des->roll, packet.throttle, &arcadePower);
+    arcadePower[0] = 0.05;
+    arcadePower[1] = 0.05;
+    driveControlMixer(arcadePower, &cmds);
   }
   sendMotorCommands(&cmds);
   clearMotorCommands(&cmds);
 
   limitLoopRate(2000);
-}
-
-void trackLoopTime(uint32_t *prevTime, uint32_t *currTime, float *dt) {
-  *prevTime = currTime;      
-  *currTime = micros();      
-  *dt = (currTime - prevTime) / 1000000.0;
-}
-
-void limitLoopRate(uint32_t freqHz) {
-  delayMicroseconds(invFreqHz - (micros() - currTime))
 }
 
 /**
@@ -84,12 +80,12 @@ void limitLoopRate(uint32_t freqHz) {
  * @return the reading of the ultrasonic sensor, in inches
  */
 uint32_t readUltrasonicInches(uint32_t ch) {
-  digitalWrite(US_TRIG[i], LOW);
+  digitalWrite(US_TRIG[ch], LOW);
   delayMicroseconds(2);  /* Ensure pin is reset */
-  digitalWrite(US_TRIG[i], HIGH);
+  digitalWrite(US_TRIG[ch], HIGH);
   delayMicroseconds(10);  /* 10us delay to start module */
-  digitalWrite(US_TRIG[i], LOW);
-  return pulseIn(US_ECHO[i], HIGH) / 58.0;
+  digitalWrite(US_TRIG[ch], LOW);
+  return pulseIn(US_ECHO[ch], HIGH) / 58.0;
 }
 
 /**
@@ -146,26 +142,26 @@ void readIMU(IMUData *data) {
  */
 void arcadeDrive(float x, float y, float *out) {
   // TODO have this go in reverse too
-    float *left = out[0];
-    float *right = out[1];
+    float *left = &out[0];
+    float *right = &out[1];
 
-    float max = max(abs(x), abs(y));
+    float max_v = max(abs(x), abs(y));
     float diff = y - x;
     float sum = y + x;
     if (y > 0) {
         if (x > 0) {
-            *left = max;
+            *left = max_v;
             *right = diff;
         } else {
             *left = sum;
-            *right = max;
+            *right = max_v;
         }
     } else {
         if (x > 0) {
             *left = sum;
-            *right = -max;
+            *right = -max_v;
         } else {
-            *left = -max;
+            *left = -max_v;
             *right = diff;
         }
     }
@@ -179,13 +175,15 @@ void driveControlMixer(float *sidedPowers, MotorCommands *outCommands) {
 }
 
 void sendMotorCommands(MotorCommands *cmds) {
+  float cmd;
   for (uint32_t ch = 0; ch < NUM_MOTORS; ++ch) {
-    analogWrite(MOTORS[i], cmds[i] * 255);
+    cmd = *(&cmds->frontLeft + ch) * 255;
+    analogWrite(MOTORS[ch], floor(cmd));
   }
 }
 
 void clearMotorCommands(MotorCommands *cmds) {
   for (uint32_t ch = 0; ch < NUM_MOTORS; ++ch) {
-    cmds[ch] = 0;
+    *(&cmds->frontLeft + ch) = 0;
   }
 }
