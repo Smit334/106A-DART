@@ -44,8 +44,8 @@ void setup() {
   /* Initialize pin modes for motors and servos. */
   for (uint32_t ch = 0; ch < NUM_MOTORS; ++ch) {
     pinMode(FLY_MOTORS[ch], OUTPUT);
-    pinMode(DRIVE_SERVOS[ch], OUTPUT);
-    analogWriteFrequency(DRIVE_SERVOS[ch], PWM_FREQ_HZ);
+    pinMode(DRIVE_MOTORS[ch], OUTPUT);
+    analogWriteFrequency(DRIVE_MOTORS[ch], PWM_FREQ_HZ);
   }
 
   /* Initialize pin modes for ultrasonic sensors. */
@@ -119,7 +119,12 @@ void readIMU(IMUData *data) {
   data->GYR_Z = readNextIMUReg();
 }
 
-
+/**
+ * Send commands to the flight or drive motors based on isFlightMode
+ * 
+ * @param cmds the MotorCommands struct of commands to send to each motor
+ * @param isFlightMode if true, send commands to flight motors, else send commands to drive motors
+ */
 void sendMotorCommands(MotorCommands *cmds, bool isFlightMode) {
   float cmd;
   if (isFlightMode) {
@@ -130,11 +135,17 @@ void sendMotorCommands(MotorCommands *cmds, bool isFlightMode) {
   } else {
     for (uint32_t ch = 0; ch < NUM_MOTORS; ++ch) {
       cmd = *(&cmds->frontLeft + ch);
-      analogWrite(DRIVE_SERVOS[ch], floor(cmd));
+      analogWrite(DRIVE_MOTORS[ch], floor(cmd));
     }
   }
 }
 
+/**
+ * Clear motor commands inside the command struct.
+ * DOES NOT SEND MOTOR COMMANDS TO MOTORS!
+ * 
+ * @param cmds the MotorCommands struct to clear
+ */
 void clearMotorCommands(MotorCommands *cmds) {
   for (uint32_t ch = 0; ch < NUM_MOTORS; ++ch) {
     *(&cmds->frontLeft + ch) = 0;

@@ -1,19 +1,5 @@
 #include "driveController.h"
 
-/**
- * Calculates bounded motor outputs for an arcade drive system.
- *
- * Turns using the x input and fwd/back using the y.
- * Generally used to emulate the feel of driving in an "arcade"
- * instead of standard tank drive (west coast motor configuration).
- * May pass any input, most often used with two joysticks:
- * left driver Y axis and right driver X axis.
- *
- * @param x joystick input [-1, 1] used for turning.
- * @param y joystick input [-1, 1] used for forward/backward movement.
- * @param out power set [-1, 1] for left (index 0)
- *         and right (index 1) drive sides
- */
 void arcadeDrive(float x, float y, float *out) {
   // TODO have this go in reverse too
   float *left = &out[0];

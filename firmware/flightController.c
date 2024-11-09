@@ -1,16 +1,25 @@
 #include "flightController.h"
 
-float q0; //Initialize quaternion for madgwick filter
+ /* Quaternion for Madgwick filter */
+float q0;
 float q1;
 float q2;
 float q3;
 
-//Normalized desired state:
-float thro_des, roll_des, pitch_des, yaw_des;
-float roll_passthru, pitch_passthru, yaw_passthru;
+/* Normalized desired state constants */
+float thro_des;
+float roll_des;
+float pitch_des; 
+float yaw_des;
+float roll_passthru;
+float pitch_passthru;
+float yaw_passthru;
 
-//Controller:
-float integral_yaw_prev, integral_pitch_prev, error_yaw_prev, integral_roll_prev;
+/* PID controller previous values */
+float integral_yaw_prev;
+float integral_pitch_prev;
+float error_yaw_prev;
+float integral_roll_prev;
 
 void initConstants(void) {
   q0 = 1.0f;
@@ -20,11 +29,6 @@ void initConstants(void) {
 }
 
 void Madgwick6DOF(IMUData *imu, RPYAngles *angles) {
-  //DESCRIPTION: Attitude estimation through sensor fusion - 6DOF
-  /*
-   * See description of Madgwick() for more information. This is a 6DOF implimentation for when magnetometer data is not
-   * available (for example when using the recommended MPU6050 IMU for the default setup).
-   */
   float recipNorm;
   float s0, s1, s2, s3;
   float qDot1, qDot2, qDot3, qDot4;
@@ -101,19 +105,7 @@ void Madgwick6DOF(IMUData *imu, RPYAngles *angles) {
   angles->yaw = -atan2(q1*q2 + q0*q3, 0.5f - q2*q2 - q3*q3)*57.29577951; //degrees
 }
 
-void controlANGLE(IMUData *imu, RPYAngles *actual, RPYAngles *des, float throttle, RPYAngles *pid) {
-  //DESCRIPTION: Computes control commands based on state error (angle)
-  /*
-   * Basic PID control to stablize on angle setpoint based on desired states roll_des, pitch_des, and yaw_des computed in 
-   * getDesState(). Error is simply the desired state minus the actual state (ex. roll_des - roll_IMU). Two safety features
-   * are implimented here regarding the I terms. The I terms are saturated within specified limits on startup to prevent 
-   * excessive buildup. This can be seen by holding the vehicle at an angle and seeing the motors ramp up on one side until
-   * they've maxed out throttle...saturating I to a specified limit fixes this. The second feature defaults the I terms to 0
-   * if the throttle is at the minimum setting. This means the motors will not start spooling up on the ground, and the I 
-   * terms will always start from 0 on takeoff. This function updates the variables pid->roll, pid->pitch, and pid->yaw which
-   * can be thought of as 1-D stablized signals. They are mixed to the configuration of the vehicle in controlMixer().
-   */
-  
+void controlANGLE(IMUData *imu, RPYAngles *actual, RPYAngles *des, float throttle, RPYAngles *pid) {  
   //Roll
   float error_roll = des->roll - actual->roll;
   float integral_roll = integral_roll_prev + error_roll*dt;
@@ -158,8 +150,4 @@ void controlMixer(RPYAngles *pid, float throttle, MotorCommands *cmds) {
   cmds->frontRight = throttle - pid->pitch - pid->roll - pid->yaw; //Front Right
   cmds->backRight = throttle + pid->pitch - pid->roll + pid->yaw; //Back Right
   cmds->backLeft = throttle + pid->pitch + pid->roll - pid->yaw; //Back Left
-}
-
-inline float invSqrt(float value) {
-  return 1.0 / sqrt(value);
 }
