@@ -9,7 +9,8 @@
 #define IMU_INIT_VALUE 0x4000 | 0x0000 | 0x0000 | 0x0020 | 0x0007
 
 /* Number of motors (drive or fly) */
-#define NUM_MOTORS 4
+#define NUM_FLY_MOTORS 4
+#define NUM_DRIVE_MOTORS 2
 
 /* Number of ultrasonic sensors */
 #define NUM_US 5
@@ -23,10 +24,18 @@
 /* Control loop frequency */
 #define LOOP_RATE_HZ 2000
 
-// TODO make sure these are correct (I do not think they are)
 /* Radio pins */
-#define RADIO_CE_PIN 9
+#define RADIO_CE_PIN 37
 #define RADIO_CSN_PIN 10
+#define RADIO_IRQ_PIN 38
+
+#define NUM_BUTTONS 5
+
+/* LED pins (for debug / state display) */
+#define LED_RED_A_PIN 16
+#define LED_RED_B_PIN 17
+#define LED_BLUE_A_PIN 20
+#define LED_BLUE_B_PIN 21
 
 /* Stores data returned from IMU */
 typedef struct {
@@ -40,24 +49,32 @@ typedef struct {
 
 /* General RPY/YPR float values */
 typedef struct {
-  float yaw;
-  float pitch;
-  float roll;
+  uint32_t yaw;
+  uint32_t pitch;
+  uint32_t roll;
 } RPYAngles;
 
-/* Motor control values, float range [0, 1] */
+/* Flight motor control values, float range [0, 1] */
 typedef struct {
   float frontLeft;
   float frontRight;
   float backRight;
   float backLeft;
-} MotorCommands;
+} FlyCommands;
+
+/* Drive motor control values, float range [0, 1] */
+typedef struct {
+  float left;
+  float right;
+} DriveCommands;
 
 /* Packet received from radio */
 typedef struct {
   RPYAngles des;
-  float throttle;
+  uint32_t throttle;
   bool isFlightMode;
+  bool isAutoMode;
+  bool buttons[NUM_BUTTONS];
 } RadioPacket;
 
 /* Loop timing */
@@ -66,8 +83,8 @@ extern uint32_t currTime;
 extern uint32_t prevTime;
 
 /* PWM pins (motor/servo control)*/
-extern const uint32_t FLY_MOTORS[NUM_MOTORS];
-extern const uint32_t DRIVE_MOTORS[NUM_MOTORS];
+extern const uint32_t FLY_MOTORS[NUM_FLY_MOTORS];
+extern const uint32_t DRIVE_MOTORS[NUM_DRIVE_MOTORS];
 extern const uint32_t TRANSITION_SERVOS[NUM_TSERVO];
 
 /* Digital pins (ultrasonic)*/

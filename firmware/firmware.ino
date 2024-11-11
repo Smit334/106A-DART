@@ -14,8 +14,8 @@ IMUData imu;
 float ultrasonicInches[NUM_MOTORS];
 RPYAngles position;
 RPYAngles pid;
-MotorCommands cmds;
-float arcadePower[2];
+DriveCommands driveCmds;
+FlyCommands flyCmds;
 RadioPacket packet;
 
 RF24 radio(RADIO_CE_PIN, RADIO_CSN_PIN);
@@ -41,9 +41,14 @@ void setup() {
   radio.openReadingPipe(1, PIPE);
   radio.startListening();
 
-  /* Initialize pin modes for motors and servos. */
-  for (uint32_t ch = 0; ch < NUM_MOTORS; ++ch) {
+  /* Initialize pin modes for fly motors. */
+  for (uint32_t ch = 0; ch < NUM_FLY_MOTORS; ++ch) {
     pinMode(FLY_MOTORS[ch], OUTPUT);
+    analogWriteFrequency(FLY_MOTORS[ch], PWM_FREQ_HZ);
+  }
+
+  /* Initialize pin modes for drive motors. */
+  for (uint32_t ch = 0; ch < NUM_DRIVE_MOTORS; ++ch) {
     pinMode(DRIVE_MOTORS[ch], OUTPUT);
     analogWriteFrequency(DRIVE_MOTORS[ch], PWM_FREQ_HZ);
   }
@@ -62,22 +67,17 @@ void loop() {
 
   readIMU(&imu);
   Madgwick6DOF(&imu, &position);
-  for (uint32_t ch = 0; ch < NUM_MOTORS; ++ch) {
+  for (uint32_t ch = 0; ch < NUM_US; ++ch) {
     ultrasonicInches[ch] = usToInches(readUltrasonicAveraged(ch));
   }
   radio.read(&packet, sizeof(packet));
 
   if (packet.isFlightMode) {
     controlANGLE(&imu, &position, &packet.des, packet.throttle, &pid);
-    controlMixer(&pid, packet.throttle, &cmds);
+    controlMixer(&pid, packet.throttle, &flyCmds);
   } else {
-    arcadeDrive(packet.des.roll, packet.throttle, arcadePower);
-    driveControlMixer(arcadePower, &cmds);
+    arcadeDrive(packet.des.roll, packet.throttle, &driveCmds);
   }
-  
-  sendMotorCommands(&cmds, packet.isFlightMode);
-  clearMotorCommands(&cmds);
-
   limitLoopRate();
 }
 
@@ -119,35 +119,18 @@ void readIMU(IMUData *data) {
   data->GYR_Z = readNextIMUReg();
 }
 
-/**
- * Send commands to the flight or drive motors based on isFlightMode
- * 
- * @param cmds the MotorCommands struct of commands to send to each motor
- * @param isFlightMode if true, send commands to flight motors, else send commands to drive motors
- */
-void sendMotorCommands(MotorCommands *cmds, bool isFlightMode) {
+void sendFlightCommands(FlyCommands *cmds) {
   float cmd;
-  if (isFlightMode) {
-    for (uint32_t ch = 0; ch < NUM_MOTORS; ++ch) {
-      cmd = *(&cmds->frontLeft + ch);
-      analogWrite(FLY_MOTORS[ch], FLY_PWM_MIN + (floor(cmd) * FLY_PWM_RANGE));
-    }
-  } else {
-    for (uint32_t ch = 0; ch < NUM_MOTORS; ++ch) {
-      cmd = *(&cmds->frontLeft + ch);
-      analogWrite(DRIVE_MOTORS[ch], floor(cmd));
-    }
+  for (uint32_t ch = 0; ch < NUM_FLY_MOTORS; ++ch) {
+    cmd = *(&cmds->frontLeft + ch);
+    analogWrite(FLY_MOTORS[ch], FLY_PWM_MIN + (floor(cmd) * FLY_PWM_RANGE));
   }
 }
 
-/**
- * Clear motor commands inside the command struct.
- * DOES NOT SEND MOTOR COMMANDS TO MOTORS!
- * 
- * @param cmds the MotorCommands struct to clear
- */
-void clearMotorCommands(MotorCommands *cmds) {
-  for (uint32_t ch = 0; ch < NUM_MOTORS; ++ch) {
-    *(&cmds->frontLeft + ch) = 0;
+void sendDriveCommands(DriveCommands *cmds) {
+  float cmd;
+  for (uint32_t ch = 0; ch < NUM_DRIVE_MOTORS; ++ch) {
+    cmd = *(&cmds->left + ch);
+    analogWrite(DRIVE_MOTORS[ch], floor(cmd));
   }
 }
