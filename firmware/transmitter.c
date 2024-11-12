@@ -28,15 +28,15 @@ typedef struct {
 typedef struct {
     RPYAngles des;
     uint32_t throttle;
-    uint8_t isFlightMode;
-    uint8_t isAutoMode;
-    uint8_t buttons[NUM_BUTTONS];
+    bool isFlightMode;
+    bool isAutoMode;
+    bool buttons[NUM_BUTTONS];
 } RadioPacket;
 
 // Variables to hold joystick data and mode
 RadioPacket data;
-uint8_t flightMode = 1;  // 1 for Flight mode, 0 for Drive mode
-uint8_t previousButtonState = LOW;  // Used for detecting button press changes
+bool flightMode = 1;  // 1 for Flight mode, 0 for Drive mode
+bool previousButtonState = LOW;  // Used for detecting button press changes
 
 // Function to map values (analogous to Arduino's map() function)
 int32_t mapValue(int32_t x, int32_t in_min, int32_t in_max, int32_t out_min, int32_t out_max) {
@@ -75,14 +75,14 @@ void loop() {
 
     if (flightMode) {
         // Flight Mode mappings
-        data.des.yaw = mapValue(yawRaw, JOYSTICK_MIN, JOYSTICK_MAX, -127, 127);
-        data.des.pitch = mapValue(pitchRaw, JOYSTICK_MIN, JOYSTICK_MAX, -127, 127);
-        data.des.roll = mapValue(rollRaw, JOYSTICK_MIN, JOYSTICK_MAX, -127, 127);
+        data.des.yaw = mapValue(yawRaw, JOYSTICK_MIN, JOYSTICK_MAX, -100, 100);
+        data.des.pitch = mapValue(pitchRaw, JOYSTICK_MIN, JOYSTICK_MAX, -100, 100);
+        data.des.roll = mapValue(rollRaw, JOYSTICK_MIN, JOYSTICK_MAX, -100, 100);
     } else {
         // Drive Mode mappings
-        data.des.yaw = mapValue(yawRaw, JOYSTICK_MIN, JOYSTICK_MAX, -127, 127);  // Steering
+        data.des.yaw = mapValue(yawRaw, JOYSTICK_MIN, JOYSTICK_MAX, -100, 100);  // Steering
         data.des.pitch = 0;  // No pitch in Drive mode
-        data.des.roll = mapValue(rollRaw, JOYSTICK_MIN, JOYSTICK_MAX, -127, 127);  // Forward/Backward speed
+        data.des.roll = mapValue(rollRaw, JOYSTICK_MIN, JOYSTICK_MAX, -100, 100);  // Forward/Backward speed
     }
 
     data.isFlightMode = flightMode;
