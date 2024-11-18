@@ -2,6 +2,7 @@
 #define UTIL_H
 
 #include <Arduino.h>
+#include "../common.h"
 
 #define IMU_I2C_ADDR 0x68
 #define IMU_DATA_REG_START_ADDR 0x03
@@ -28,8 +29,6 @@
 #define RADIO_CE_PIN 37
 #define RADIO_CSN_PIN 10
 #define RADIO_IRQ_PIN 38
-
-#define NUM_BUTTONS 5
 
 /* LED pins (for debug / state display) */
 #define LED_RED_A_PIN 16
@@ -67,15 +66,6 @@ typedef struct {
   float left;
   float right;
 } DriveCommands;
-
-/* Packet received from radio */
-typedef struct {
-  RPYAngles des;
-  uint32_t throttle;
-  bool isFlightMode;
-  bool isAutoMode;
-  bool buttons[NUM_BUTTONS];
-} RadioPacket;
 
 /* Loop timing */
 extern float dt;
