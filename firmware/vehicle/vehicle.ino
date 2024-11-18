@@ -16,7 +16,10 @@ RPYAngles position;
 RPYAngles pid;
 DriveCommands driveCmds;
 FlyCommands flyCmds;
+
 RadioPacket packet;
+float throttle;
+RPYAngles des;
 
 RF24 radio(RADIO_CE_PIN, RADIO_CSN_PIN);
 
@@ -59,7 +62,7 @@ void setup() {
     pinMode(US_ECHO[ch], INPUT);
   }
 
-  packet.isFlightMode = false;
+  packet.buttons.isFlightMode = false;
 }
 
 void loop() {
@@ -71,14 +74,22 @@ void loop() {
     ultrasonicInches[ch] = usToInches(readUltrasonicAveraged(ch));
   }
   radio.read(&packet, sizeof(packet));
+  decodeRadioPacket(&packet, &throttle, &des);
 
-  if (packet.isFlightMode) {
-    controlANGLE(&imu, &position, &packet.des, packet.throttle, &pid);
-    controlMixer(&pid, packet.throttle, &flyCmds);
+  if (packet.buttons.bits.isFlightMode) {
+    controlANGLE(&imu, &position, &des, throttle, &pid);
+    controlMixer(&pid, throttle, &flyCmds);
   } else {
-    arcadeDrive(packet.des.roll, packet.throttle, &driveCmds);
+    tankDrive(packet.left.y, packet.right.y, &driveCmds);
   }
   limitLoopRate();
+}
+
+void decodeRadioPacket(RadioPacket *packet, float *throttle, RPYAngles *des) {
+    *throttle = packet->left.y;
+    des->roll = packet->left.x;
+    des->pitch = packet->right.y;
+    des->yaw = packet->right.x;
 }
 
 /**

@@ -18,4 +18,6 @@
  */
 void arcadeDrive(float x, float y, DriveCommands *cmds);
 
+void tankDrive(float left, float right, DriveCommands *cmds);
+
 #endif /* DRIVECONTROLLER_H */

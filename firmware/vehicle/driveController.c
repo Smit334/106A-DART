@@ -22,3 +22,8 @@ void arcadeDrive(float x, float y, DriveCommands *cmds) {
     }
   }
 }
+
+void tankDrive(float left, float right, DriveCommands *cmds) {
+    cmds->left = left;
+    cmds->right = right;
+}
