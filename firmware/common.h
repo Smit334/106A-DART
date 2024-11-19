@@ -6,24 +6,19 @@
 #include <stdint.h>
 
 typedef struct {
-    uint16_t x:10;
-    uint16_t y:10;
-    uint16_t sel:1;
-} Joystick;
+    uint16_t leftJoystickX:10;
+    uint16_t leftJoystickY:10;
+    uint8_t leftJoystickSelect:1;
 
-typedef struct {
-    Joystick left;
-    Joystick right;
-    union {
-        struct {
-            uint8_t isFlightMode:1;
-            uint8_t isAutoMode:1;
-            uint8_t switchOne:1;
-            uint8_t switchTwo:1;
-            uint8_t switchThree:1;
-        } bits;
-        uint8_t all:5;
-    } buttons;
+    uint16_t rightJoystickX:10;
+    uint16_t rightJoystickY:10;
+    uint8_t rightJoystickSelect:1;
+
+    uint8_t isFlightMode:1;
+    uint8_t isAutoMode:1;
+    uint8_t buttonOne:1;
+    uint8_t buttonTwo:1;
+    uint8_t buttonThree:1;
 } RadioPacket;
 
 #endif
