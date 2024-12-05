@@ -1,7 +1,7 @@
 #ifndef UTIL_H
 #define UTIL_H
 
-#include "../common.h"
+#include "common.h"
 
 /* Radio pins */
 #define RADIO_CE_PIN 10

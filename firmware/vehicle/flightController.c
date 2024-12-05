@@ -145,7 +145,7 @@ void controlANGLE(IMUData *imu, RPYAngles *actual, RPYAngles *des, float throttl
   integral_yaw_prev = integral_yaw;
 }
 
-void controlMixer(RPYAngles *pid, float throttle, MotorCommands *cmds) {
+void controlMixer(RPYAngles *pid, float throttle, FlyCommands *cmds) {
   cmds->frontLeft = throttle - pid->pitch + pid->roll + pid->yaw; //Front Left
   cmds->frontRight = throttle - pid->pitch - pid->roll - pid->yaw; //Front Right
   cmds->backRight = throttle + pid->pitch - pid->roll + pid->yaw; //Back Right

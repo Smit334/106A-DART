@@ -2,7 +2,7 @@
 #define UTIL_H
 
 #include <Arduino.h>
-#include "../common.h"
+#include "common.h"
 
 #define IMU_I2C_ADDR 0x68
 #define IMU_DATA_REG_START_ADDR 0x03
@@ -24,6 +24,10 @@
 
 /* Control loop frequency */
 #define LOOP_RATE_HZ 2000
+
+/* IMU parameters */
+#define GYRO_SCALE MPU6050_RANGE_250_DEG
+#define ACCEL_SCALE MPU6050_RANGE_2_G
 
 /* Radio pins */
 #define RADIO_CE_PIN 37

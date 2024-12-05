@@ -59,7 +59,7 @@ void controlANGLE(IMUData *imu, RPYAngles *actual, RPYAngles *des, float throttl
  * @param throttle controlled throttle value
  * @param cmds pointer to MotorCommands to set (output)
  */
-void controlMixer(RPYAngles *pid, float throttle, MotorCommands *cmds);
+void controlMixer(RPYAngles *pid, float throttle, FlyCommands *cmds);
 
 /**
  * Inverse square root utility function
