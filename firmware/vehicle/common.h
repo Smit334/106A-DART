@@ -5,7 +5,12 @@
 
 #include <stdint.h>
 
+#define DRIVE_MODE 0
+#define FLIGHT_MODE 1
+
 #define RADIO_ADDR 0xE8E8F0F0E1LL
+
+typedef uint8_t vehicle_mode_t;
 
 typedef struct {
     uint16_t leftJoystickX:10;
@@ -16,7 +21,7 @@ typedef struct {
     uint16_t rightJoystickY:10;
     uint8_t rightJoystickSelect:1;
 
-    uint8_t isFlightMode:1;
+    vehicle_mode_t vehicleMode:1;
     uint8_t isAutoMode:1;
     uint8_t buttonOne:1;
     uint8_t buttonTwo:1;

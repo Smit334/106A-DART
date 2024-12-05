@@ -42,7 +42,7 @@ void loop() {
   packet.rightJoystickY = analogRead(RIGHT_JS_Y_PIN);
   packet.rightJoystickSelect = digitalRead(RIGHT_JS_SEL_PIN);
 
-  packet.isFlightMode = digitalRead(FLIGHT_MODE_SW_PIN);
+  packet.vehicleMode = digitalRead(FLIGHT_MODE_SW_PIN);
   packet.isAutoMode = digitalRead(AUTO_MODE_SW_PIN);
   packet.buttonOne = digitalRead(BTN_ONE_PIN);
   packet.buttonTwo = digitalRead(BTN_TWO_PIN);

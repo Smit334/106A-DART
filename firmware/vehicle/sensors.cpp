@@ -43,14 +43,14 @@ void initIMU(void) {
 
 void readIMU(IMUData *data) {
   imuAccel->getEvent(&sensorEvent);
-  data->ACC_X = sensorEvent.acceleration.x;
-  data->ACC_Y = sensorEvent.acceleration.y;
-  data->ACC_Z = sensorEvent.acceleration.z;
+  data->accX = sensorEvent.acceleration.x;
+  data->accY = sensorEvent.acceleration.y;
+  data->accZ = sensorEvent.acceleration.z;
 
   imuGyro->getEvent(&sensorEvent);
-  data->GYR_X = sensorEvent.gyro.x;
-  data->GYR_Y = sensorEvent.gyro.y;
-  data->GYR_Z = sensorEvent.gyro.z;
+  data->gyrX = sensorEvent.gyro.x;
+  data->gyrY = sensorEvent.gyro.y;
+  data->gyrZ = sensorEvent.gyro.z;
 }
 
 

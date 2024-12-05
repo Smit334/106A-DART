@@ -35,9 +35,9 @@ void Madgwick6DOF(IMUData *imu, RPYAngles *angles) {
   float _2q0, _2q1, _2q2, _2q3, _4q0, _4q1, _4q2 ,_8q1, _8q2, q0q0, q1q1, q2q2, q3q3;
 
   //Convert gyroscope degrees/sec to radians/sec
-  float gx = deg2rad(imu->GYR_X);
-  float gy = deg2rad(imu->GYR_Y);
-  float gz = deg2rad(imu->GYR_Z);
+  float gx = deg2rad(imu->gyrX);
+  float gy = deg2rad(imu->gyrY);
+  float gz = deg2rad(imu->gyrZ);
 
   //Rate of change of quaternion from gyroscope
   qDot1 = 0.5f * (-q1 * gx - q2 * gy - q3 * gz);
@@ -46,12 +46,12 @@ void Madgwick6DOF(IMUData *imu, RPYAngles *angles) {
   qDot4 = 0.5f * (q0 * gz + q1 * gy - q2 * gx);
 
   //Compute feedback only if accelerometer measurement valid (avoids NaN in accelerometer normalisation)
-  if (!((imu->ACC_X == 0.0f) && (imu->ACC_Y == 0.0f) && (imu->ACC_Z == 0.0f))) {
+  if (!((imu->accX == 0.0f) && (imu->accY == 0.0f) && (imu->accZ == 0.0f))) {
     //Normalise accelerometer measurement
-    recipNorm = invSqrt(imu->ACC_X * imu->ACC_X + imu->ACC_Y * imu->ACC_Y + imu->ACC_Z * imu->ACC_Z);
-    float ax = imu->ACC_X * recipNorm;
-    float ay = imu->ACC_Y * recipNorm;
-    float az = imu->ACC_Z * recipNorm;
+    recipNorm = invSqrt(imu->accX * imu->accX + imu->accY * imu->accY + imu->accZ * imu->accZ);
+    float ax = imu->accX * recipNorm;
+    float ay = imu->accY * recipNorm;
+    float az = imu->accZ * recipNorm;
 
     //Auxiliary variables to avoid repeated arithmetic
     _2q0 = 2.0f * q0;
@@ -113,7 +113,7 @@ void controlANGLE(IMUData *imu, RPYAngles *actual, RPYAngles *des, float throttl
     integral_roll = 0;
   }
   integral_roll = constrain(integral_roll, -i_limit, i_limit); //Saturate integrator to prevent unsafe buildup
-  float derivative_roll = imu->GYR_X;
+  float derivative_roll = imu->gyrX;
   pid->roll = 0.01*(Kp_roll*error_roll + Ki_roll*integral_roll - Kd_roll*derivative_roll); //Scaled by .01 to bring within -1 to 1 range
 
   //Pitch
@@ -123,11 +123,11 @@ void controlANGLE(IMUData *imu, RPYAngles *actual, RPYAngles *des, float throttl
     integral_pitch = 0;
   }
   integral_pitch = constrain(integral_pitch, -i_limit, i_limit); //Saturate integrator to prevent unsafe buildup
-  float derivative_pitch = imu->GYR_Y;
+  float derivative_pitch = imu->gyrY;
   pid->pitch = .01*(Kp_pitch*error_pitch + Ki_pitch*integral_pitch - Kd_pitch*derivative_pitch); //Scaled by .01 to bring within -1 to 1 range
 
   //Yaw, stablize on rate from GyroZ
-  float error_yaw = des->yaw - imu->GYR_Z;
+  float error_yaw = des->yaw - imu->gyrZ;
   float integral_yaw = integral_yaw_prev + error_yaw*dt;
   if (throttle < MIN_THROTTLE) {   //Don't let integrator build if throttle is too low
     integral_yaw = 0;

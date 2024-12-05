@@ -42,12 +42,12 @@
 
 /* Stores data returned from IMU */
 typedef struct {
-  uint16_t ACC_X;
-  uint16_t ACC_Y;
-  uint16_t ACC_Z;
-  uint16_t GYR_X;
-  uint16_t GYR_Y;
-  uint16_t GYR_Z;
+  uint16_t accX;
+  uint16_t accY;
+  uint16_t accZ;
+  uint16_t gyrX;
+  uint16_t gyrY;
+  uint16_t gyrZ;
 } IMUData;
 
 /* General RPY/YPR float values */
@@ -77,9 +77,9 @@ extern uint32_t currTime;
 extern uint32_t prevTime;
 
 /* PWM pins (motor/servo control)*/
-extern const uint32_t FLY_MOTORS[NUM_FLY_MOTORS];
-extern const uint32_t DRIVE_MOTORS[NUM_DRIVE_MOTORS];
-extern const uint32_t TRANSITION_SERVOS[NUM_TSERVO];
+extern const uint32_t FLY_MOTOR_PINS[NUM_FLY_MOTORS];
+extern const uint32_t DRIVE_MOTOR_PINS[NUM_DRIVE_MOTORS];
+extern const uint32_t TRANSITION_SERVO_PINS[NUM_TSERVO];
 
 /* Digital pins (ultrasonic)*/
 extern const uint32_t US_TRIG[NUM_US];
