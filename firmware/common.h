@@ -5,6 +5,8 @@
 
 #include <stdint.h>
 
+const uint64_t RADIO_ADDR = 0xE8E8F0F0E1LL;
+
 typedef struct {
     uint16_t leftJoystickX:10;
     uint16_t leftJoystickY:10;

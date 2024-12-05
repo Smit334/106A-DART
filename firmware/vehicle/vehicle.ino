@@ -41,7 +41,7 @@ void setup() {
   radio.begin();
   radio.setPALevel(RF24_PA_HIGH);
   radio.setChannel(110);
-  radio.openReadingPipe(1, PIPE);
+  radio.openReadingPipe(1, RADIO_ADDR);
   radio.startListening();
 
   /* Initialize pin modes for fly motors. */
