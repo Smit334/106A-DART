@@ -23,7 +23,7 @@ void arcadeDrive(float x, float y, DriveCommands *cmds) {
   }
 }
 
-void tankDrive(float left, float right, DriveCommands *cmds) {
-    cmds->left = left;
-    cmds->right = right;
+void tankDrive(uint16_t left, uint16_t right, DriveCommands *cmds) {
+    cmds->left = left < LEFT_JOYSTICK_CTR ? 0 : ((left - LEFT_JOYSTICK_CTR) / 2);
+    cmds->right = right < RIGHT_JOYSTICK_CTR ? 0 : ((right - RIGHT_JOYSTICK_CTR) / 2);
 }

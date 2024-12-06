@@ -65,10 +65,10 @@ typedef struct {
   float backLeft;
 } FlyCommands;
 
-/* Drive motor control values, float range [0, 1] */
+/* Drive motor control values, integer range [0, 255] */
 typedef struct {
-  float left;
-  float right;
+  uint8_t left;
+  uint8_t right;
 } DriveCommands;
 
 /* Loop timing */

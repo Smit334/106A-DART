@@ -17,7 +17,9 @@ float ultrasonicInches[NUM_US];
 RPYAngles position;
 RPYAngles pid;
 DriveCommands driveCmds;
+DriveCommands nullDriveCmds;
 FlyCommands flyCmds;
+FlyCommands nullFlyCmds;
 
 RadioPacket packet;
 float throttle;
@@ -38,6 +40,8 @@ void setup() {
 
   /* Initialize IMU (over I2C) */
   initIMU();
+
+  SPI.begin();
 
   /* Initialize radio (over SPI) */
   radio.begin();
@@ -67,32 +71,80 @@ void setup() {
   /* Create and attach Servo objects to servo pins. */
   for (uint32_t ch = 0; ch < NUM_TSERVO; ++ch) {
     transitionServos[ch].attach(TRANSITION_SERVO_PINS[ch]);
+    analogWriteFrequency(TRANSITION_SERVO_PINS[ch], PWM_FREQ_HZ);
   }
 
-  packet.vehicleMode = DRIVE_MODE;
-  lastVehicleMode = DRIVE_MODE;
+  setServos(FLIGHT_MODE);
+  lastVehicleMode = FLIGHT_MODE;
 }
 
 void loop() {
-  trackLoopTime();
+  // trackLoopTime();
 
-  readIMU(&imuData);
-  Madgwick6DOF(&imuData, &position);
-  for (uint32_t ch = 0; ch < NUM_US; ++ch) {
-    ultrasonicInches[ch] = usToInches(readUltrasonicAveraged(ch));
+  // readIMU(&imuData);
+  // Madgwick6DOF(&imuData, &position);
+  // for (uint32_t ch = 0; ch < NUM_US; ++ch) {
+  //   ultrasonicInches[ch] = usToInches(readUltrasonicAveraged(ch));
+  // }
+  
+  Serial.println(radio.isChipConnected());
+  while (!radio.available()) {
   }
   radio.read(&packet, sizeof(packet));
-  decodeRadioPacket(&packet, &throttle, &des);
+  printPacket(&packet);
+  // decodeRadioPacket(&packet, &throttle, &des);
+  Serial.println(packet.vehicleMode);
   transitionModeServos(packet.vehicleMode);
 
   if (packet.vehicleMode == FLIGHT_MODE) {
-    controlANGLE(&imuData, &position, &des, throttle, &pid);
-    controlMixer(&pid, throttle, &flyCmds);
+    // controlANGLE(&imuData, &position, &des, throttle, &pid);
+    // controlMixer(&pid, throttle, &flyCmds);
+    float control = packet.leftJoystickY < 512 ? 0 : ((packet.leftJoystickY - 512) / 512);
+    flyCmds.frontLeft = control;
+    flyCmds.frontRight = control;
+    flyCmds.backLeft = control;
+    flyCmds.backRight = control;
+    sendFlightCommands(&flyCmds);
+    sendDriveCommands(&nullDriveCmds);
   } else {
     tankDrive(packet.leftJoystickY, packet.rightJoystickY, &driveCmds);
+    sendFlightCommands(&nullFlyCmds);
+    sendDriveCommands(&driveCmds);
   }
-  limitLoopRate();
+  // limitLoopRate();
 }
+
+
+
+void printPacket(RadioPacket *packet) {
+  Serial.println("PACKET");
+
+  Serial.print("Left Joystick X: ");
+  Serial.println(packet->leftJoystickX);
+  Serial.print("Left Joystick Y: ");
+  Serial.println(packet->leftJoystickY);
+  Serial.print("Left Joystick Select: ");
+  Serial.println(packet->leftJoystickSelect);
+
+  Serial.print("Right Joystick X: ");
+  Serial.println(packet->rightJoystickX);
+  Serial.print("Right Joystick Y: ");
+  Serial.println(packet->rightJoystickY);
+  Serial.print("Right Joystick Select: ");
+  Serial.println(packet->rightJoystickSelect);
+
+  Serial.print("Vehicle Mode: ");
+  Serial.println(packet->vehicleMode);
+  Serial.print("Auto Mode: ");
+  Serial.println(packet->isAutoMode);
+  Serial.print("Button One: ");
+  Serial.println(packet->buttonOne);
+  Serial.print("Button Two: ");
+  Serial.println(packet->buttonTwo);
+  Serial.print("Button Three: ");
+  Serial.println(packet->buttonThree);
+}
+
 
 void decodeRadioPacket(RadioPacket *packet, float *throttle, RPYAngles *des) {
     *throttle = packet->leftJoystickY;
@@ -109,9 +161,12 @@ void transitionModeServos(vehicle_mode_t vehicleMode) {
 }
 
 void setServos(vehicle_mode_t vehicleMode) {
-  const uint8_t setAngle = (vehicleMode == FLIGHT_MODE) ? 0 : 90;
-  for (uint32_t ch = 0; ch < NUM_TSERVO; ++ch) {
-    transitionServos[ch].write(setAngle);
+  if (vehicleMode == FLIGHT_MODE) {
+    transitionServos[0].write(95);
+    transitionServos[1].write(85);
+  } else {
+    transitionServos[0].write(5);
+    transitionServos[1].write(180);
   }
 }
 
@@ -119,14 +174,14 @@ void sendFlightCommands(FlyCommands *cmds) {
   float cmd;
   for (uint32_t ch = 0; ch < NUM_FLY_MOTORS; ++ch) {
     cmd = *(&cmds->frontLeft + ch);
-    analogWrite(FLY_MOTOR_PINS[ch], FLY_PWM_MIN + (floor(cmd) * FLY_PWM_RANGE));
+    analogWrite(FLY_MOTOR_PINS[ch], FLY_PWM_MIN + (cmd * FLY_PWM_RANGE));
   }
 }
 
 void sendDriveCommands(DriveCommands *cmds) {
-  float cmd;
+  uint8_t cmd;
   for (uint32_t ch = 0; ch < NUM_DRIVE_MOTORS; ++ch) {
     cmd = *(&cmds->left + ch);
-    analogWrite(DRIVE_MOTOR_PINS[ch], floor(cmd));
+    analogWrite(DRIVE_MOTOR_PINS[ch], cmd);
   }
 }
