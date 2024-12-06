@@ -41,6 +41,7 @@ void setup() {
   /* Initialize IMU (over I2C) */
   initIMU();
 
+  /* Initialize SPI */
   SPI.begin();
 
   /* Initialize radio (over SPI) */
@@ -93,7 +94,6 @@ void loop() {
   radio.read(&packet, sizeof(packet));
   printPacket(&packet);
   // decodeRadioPacket(&packet, &throttle, &des);
-  Serial.println(packet.vehicleMode);
   transitionModeServos(packet.vehicleMode);
 
   if (packet.vehicleMode == FLIGHT_MODE) {
@@ -114,38 +114,6 @@ void loop() {
   // limitLoopRate();
 }
 
-
-
-void printPacket(RadioPacket *packet) {
-  Serial.println("PACKET");
-
-  Serial.print("Left Joystick X: ");
-  Serial.println(packet->leftJoystickX);
-  Serial.print("Left Joystick Y: ");
-  Serial.println(packet->leftJoystickY);
-  Serial.print("Left Joystick Select: ");
-  Serial.println(packet->leftJoystickSelect);
-
-  Serial.print("Right Joystick X: ");
-  Serial.println(packet->rightJoystickX);
-  Serial.print("Right Joystick Y: ");
-  Serial.println(packet->rightJoystickY);
-  Serial.print("Right Joystick Select: ");
-  Serial.println(packet->rightJoystickSelect);
-
-  Serial.print("Vehicle Mode: ");
-  Serial.println(packet->vehicleMode);
-  Serial.print("Auto Mode: ");
-  Serial.println(packet->isAutoMode);
-  Serial.print("Button One: ");
-  Serial.println(packet->buttonOne);
-  Serial.print("Button Two: ");
-  Serial.println(packet->buttonTwo);
-  Serial.print("Button Three: ");
-  Serial.println(packet->buttonThree);
-}
-
-
 void decodeRadioPacket(RadioPacket *packet, float *throttle, RPYAngles *des) {
     *throttle = packet->leftJoystickY;
     des->roll = packet->leftJoystickX;
@@ -162,11 +130,11 @@ void transitionModeServos(vehicle_mode_t vehicleMode) {
 
 void setServos(vehicle_mode_t vehicleMode) {
   if (vehicleMode == FLIGHT_MODE) {
-    transitionServos[0].write(95);
-    transitionServos[1].write(85);
+    transitionServos[0].write(LEFT_SERVO_FLIGHT_DEG);
+    transitionServos[1].write(RIGHT_SERVO_FLIGHT_DEG);
   } else {
-    transitionServos[0].write(5);
-    transitionServos[1].write(180);
+    transitionServos[0].write(LEFT_SERVO_DRIVE_DEG);
+    transitionServos[1].write(RIGHT_SERVO_DRIVE_DEG);
   }
 }
 

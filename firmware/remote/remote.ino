@@ -1,9 +1,7 @@
 #include <nRF24L01.h>
 #include <RF24.h>
 
-extern "C" {
-  #include "util.h"
-}
+#include "util.h"
 
 RF24 radio(RADIO_CE_PIN, RADIO_CSN_PIN);
 
@@ -53,36 +51,8 @@ void loop() {
   /* Write radio packet */
   radio.write(&packet, sizeof(packet));
   /* Do not delay after sending as vehicle loop time is very fast */
-  delay(100);
-  printPacket(&packet);
-  Serial.println(radio.isChipConnected());
-}
-
-void printPacket(RadioPacket *packet) {
-  Serial.println("PACKET");
-
-  Serial.print("Left Joystick X: ");
-  Serial.println(packet->leftJoystickX);
-  Serial.print("Left Joystick Y: ");
-  Serial.println(packet->leftJoystickY);
-  Serial.print("Left Joystick Select: ");
-  Serial.println(packet->leftJoystickSelect);
-
-  Serial.print("Right Joystick X: ");
-  Serial.println(packet->rightJoystickX);
-  Serial.print("Right Joystick Y: ");
-  Serial.println(packet->rightJoystickY);
-  Serial.print("Right Joystick Select: ");
-  Serial.println(packet->rightJoystickSelect);
-
-  Serial.print("Vehicle Mode: ");
-  Serial.println(packet->vehicleMode);
-  Serial.print("Auto Mode: ");
-  Serial.println(packet->isAutoMode);
-  Serial.print("Button One: ");
-  Serial.println(packet->buttonOne);
-  Serial.print("Button Two: ");
-  Serial.println(packet->buttonTwo);
-  Serial.print("Button Three: ");
-  Serial.println(packet->buttonThree);
+  // delay(100);
+  // printPacket(&packet);
+  // Serial.print("Radio Connected: ")
+  // Serial.println(radio.isChipConnected());
 }

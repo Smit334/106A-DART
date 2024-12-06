@@ -31,4 +31,35 @@ typedef struct {
     uint8_t buttonThree:1;
 } RadioPacket;
 
+#ifdef __cplusplus
+inline void printPacket(RadioPacket *packet) {
+  Serial.println("PACKET");
+
+  Serial.print("Left Joystick X: ");
+  Serial.println(packet->leftJoystickX);
+  Serial.print("Left Joystick Y: ");
+  Serial.println(packet->leftJoystickY);
+  Serial.print("Left Joystick Select: ");
+  Serial.println(packet->leftJoystickSelect);
+
+  Serial.print("Right Joystick X: ");
+  Serial.println(packet->rightJoystickX);
+  Serial.print("Right Joystick Y: ");
+  Serial.println(packet->rightJoystickY);
+  Serial.print("Right Joystick Select: ");
+  Serial.println(packet->rightJoystickSelect);
+
+  Serial.print("Vehicle Mode: ");
+  Serial.println(packet->vehicleMode);
+  Serial.print("Auto Mode: ");
+  Serial.println(packet->isAutoMode);
+  Serial.print("Button One: ");
+  Serial.println(packet->buttonOne);
+  Serial.print("Button Two: ");
+  Serial.println(packet->buttonTwo);
+  Serial.print("Button Three: ");
+  Serial.println(packet->buttonThree);
+}
+#endif
+
 #endif

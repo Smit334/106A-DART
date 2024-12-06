@@ -29,6 +29,12 @@
 #define GYRO_SCALE MPU6050_RANGE_250_DEG
 #define ACCEL_SCALE MPU6050_RANGE_2_G
 
+/* Servo angles per vehicle mode */
+#define LEFT_SERVO_FLIGHT_DEG 95
+#define RIGHT_SERVO_FLIGHT_DEG 85
+#define LEFT_SERVO_DRIVE_DEG 5
+#define RIGHT_SERVO_DRIVE_DEG 180
+
 /* Radio pins */
 #define RADIO_CE_PIN 37
 #define RADIO_CSN_PIN 10
