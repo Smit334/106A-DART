@@ -4,11 +4,6 @@
 #include <Arduino.h>
 #include "common.h"
 
-#define IMU_I2C_ADDR 0x68
-#define IMU_DATA_REG_START_ADDR 0x03
-#define IMU_INIT_ADDR 0x20
-#define IMU_INIT_VALUE 0x4000 | 0x0000 | 0x0000 | 0x0020 | 0x0007
-
 /* Number of motors (drive or fly) */
 #define NUM_FLY_MOTORS 4
 #define NUM_DRIVE_MOTORS 2
@@ -30,9 +25,9 @@
 #define ACCEL_SCALE MPU6050_RANGE_2_G
 
 /* Servo angles per vehicle mode */
-#define LEFT_SERVO_FLIGHT_DEG 95
-#define RIGHT_SERVO_FLIGHT_DEG 85
-#define LEFT_SERVO_DRIVE_DEG 5
+#define LEFT_SERVO_FLIGHT_DEG 85
+#define RIGHT_SERVO_FLIGHT_DEG 95
+#define LEFT_SERVO_DRIVE_DEG 0
 #define RIGHT_SERVO_DRIVE_DEG 180
 
 /* Radio pins */
@@ -40,20 +35,31 @@
 #define RADIO_CSN_PIN 10
 #define RADIO_IRQ_PIN 38
 
+#define I2C_SCL 16
+#define I2C_SDA 17
+
 /* LED pins (for debug / state display) */
-#define LED_RED_A_PIN 16
-#define LED_RED_B_PIN 17
+#define LED_RED_A_PIN 16  /* USED FOR I2C */
+#define LED_RED_B_PIN 17  /* USED FOR I2C */
 #define LED_BLUE_A_PIN 20
 #define LED_BLUE_B_PIN 21
 
+/* Battery voltage reading (from ADC) */
+#define V_BAT_PIN 41
+#define V_BAT_DIV_RATIO (680.0f / (680.0f + 2000.0f))
+#define V_BAT_OFFSET 0.15f
+#define V_BAT_WARN_THRESH 9.6
+#define VCC 3.3f
+#define ADC_MAX 1023.0f
+
 /* Stores data returned from IMU */
 typedef struct {
-  uint16_t accX;
-  uint16_t accY;
-  uint16_t accZ;
-  uint16_t gyrX;
-  uint16_t gyrY;
-  uint16_t gyrZ;
+  float accX;
+  float accY;
+  float accZ;
+  float gyrX;
+  float gyrY;
+  float gyrZ;
 } IMUData;
 
 /* General RPY/YPR float values */

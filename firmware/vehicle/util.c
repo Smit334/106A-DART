@@ -4,7 +4,7 @@ float dt;
 uint32_t currTime;
 uint32_t prevTime;
 
-const uint32_t FLY_MOTOR_PINS[NUM_FLY_MOTORS] = { 0, 1, 3, 2 };
+const uint32_t FLY_MOTOR_PINS[NUM_FLY_MOTORS] = { 0, 3, 1, 2 };
 const uint32_t DRIVE_MOTOR_PINS[NUM_DRIVE_MOTORS] = { 15, 14 };
 const uint32_t TRANSITION_SERVO_PINS[NUM_TSERVO] = { 24, 23 };
 

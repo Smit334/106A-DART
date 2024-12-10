@@ -4,8 +4,8 @@
 #include "util.h"
 
 const uint32_t MIN_THROTTLE = 1060; //Minimum throttle to effect output, in raw packet units
-const uint8_t FLY_PWM_MIN = 175;    //Minimum PWM to move flight motors, in [0, 255]
-const uint8_t FLY_PWM_RANGE = 80;   //PWM range for flight motors, in [0, 255]
+const uint8_t FLY_PWM_MINIMUMS[NUM_FLY_MOTORS] = { 165, 180, 180, 123 };
+const uint8_t FLY_PWM_MAXIMUMS[NUM_FLY_MOTORS] = { 240, 245, 245, 250 };
 
 //Filter parameters - Defaults tuned for 2kHz loop rate; Do not touch unless you know what you are doing:
 const float B_madgwick = 0.04;      //Madgwick filter parameter

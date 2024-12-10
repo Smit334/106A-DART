@@ -31,14 +31,15 @@ uint32_t readUltrasonicRaw(uint32_t ch) {
   return pulseIn(US_ECHO[ch], HIGH, 1);
 }
 
-void initIMU(void) {
+void initIMU(TwoWire *wire) {
   imu = Adafruit_MPU6050();
-  imuAccel = imu.getAccelerometerSensor();
-  imuGyro = imu.getGyroSensor();
 
-  imu.begin();
+  imu.begin(MPU6050_I2CADDR_DEFAULT, wire);
   imu.setGyroRange(GYRO_SCALE);
   imu.setAccelerometerRange(ACCEL_SCALE);
+
+  imuAccel = imu.getAccelerometerSensor();
+  imuGyro = imu.getGyroSensor();
 }
 
 void readIMU(IMUData *data) {
@@ -53,4 +54,21 @@ void readIMU(IMUData *data) {
   data->gyrZ = sensorEvent.gyro.z;
 }
 
+void printIMU(IMUData *data) {
+  Serial.println("IMU DATA");
+  
+  Serial.print("Acceleration X: ");
+  Serial.println(data->accX);
+  Serial.print("Acceleration Y: ");
+  Serial.println(data->accY);
+  Serial.print("Acceleration Z: ");
+  Serial.println(data->accZ);
+
+  Serial.print("Gyroscope X: ");
+  Serial.println(data->gyrX);
+  Serial.print("Gyroscope Y: ");
+  Serial.println(data->gyrY);
+  Serial.print("Gyroscope Z: ");
+  Serial.println(data->gyrZ);
+}
 

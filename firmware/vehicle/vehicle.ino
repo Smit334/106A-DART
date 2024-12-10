@@ -7,9 +7,9 @@
 #include "sensors.h"
 
 extern "C" {
-  #include "util.h"
-  #include "flightController.h"
-  #include "driveController.h"
+#include "util.h"
+#include "flightController.h"
+#include "driveController.h"
 }
 
 IMUData imuData;
@@ -33,13 +33,14 @@ void setup() {
   Serial.begin(115200);
 
   initConstants();
-  
+
   /* Initialize I2C */
-  Wire.begin();
-  Wire.setClock(1000000);
+  Wire1.begin();
+  Wire1.setSCL(I2C_SCL);
+  Wire1.setSDA(I2C_SDA);
 
   /* Initialize IMU (over I2C) */
-  initIMU();
+  initIMU(&Wire1);
 
   /* Initialize SPI */
   SPI.begin();
@@ -75,6 +76,11 @@ void setup() {
     analogWriteFrequency(TRANSITION_SERVO_PINS[ch], PWM_FREQ_HZ);
   }
 
+  /* Debug / LED pins */
+  pinMode(LED_BLUE_A_PIN, OUTPUT);
+  pinMode(LED_BLUE_B_PIN, OUTPUT);
+  pinMode(V_BAT_PIN, INPUT);
+
   setServos(FLIGHT_MODE);
   lastVehicleMode = FLIGHT_MODE;
 }
@@ -82,24 +88,25 @@ void setup() {
 void loop() {
   // trackLoopTime();
 
-  // readIMU(&imuData);
+  readIMU(&imuData);
+  printIMU(&imuData);
   // Madgwick6DOF(&imuData, &position);
   // for (uint32_t ch = 0; ch < NUM_US; ++ch) {
   //   ultrasonicInches[ch] = usToInches(readUltrasonicAveraged(ch));
   // }
-  
-  Serial.println(radio.isChipConnected());
-  while (!radio.available()) {
-  }
-  radio.read(&packet, sizeof(packet));
-  printPacket(&packet);
-  // decodeRadioPacket(&packet, &throttle, &des);
-  transitionModeServos(packet.vehicleMode);
 
+  // Serial.println(radio.isChipConnected());
+  // while (!radio.available()) {
+  // }
+  // radio.read(&packet, sizeof(packet));
+  // printPacket(&packet);
+  // decodeRadioPacket(&packet, &throttle, &des);
+
+  transitionModeServos(packet.vehicleMode);
   if (packet.vehicleMode == FLIGHT_MODE) {
     // controlANGLE(&imuData, &position, &des, throttle, &pid);
     // controlMixer(&pid, throttle, &flyCmds);
-    float control = packet.leftJoystickY < 512 ? 0 : ((packet.leftJoystickY - 512) / 512);
+    float control = packet.leftJoystickY < 512 ? 0 : ((packet.leftJoystickY - 512.0f) / 512.0f);
     flyCmds.frontLeft = control;
     flyCmds.frontRight = control;
     flyCmds.backLeft = control;
@@ -111,14 +118,15 @@ void loop() {
     sendFlightCommands(&nullFlyCmds);
     sendDriveCommands(&driveCmds);
   }
+  displayDebugIndicators();
   // limitLoopRate();
 }
 
 void decodeRadioPacket(RadioPacket *packet, float *throttle, RPYAngles *des) {
-    *throttle = packet->leftJoystickY;
-    des->roll = packet->leftJoystickX;
-    des->pitch = packet->rightJoystickY;
-    des->yaw = packet->rightJoystickX;
+  *throttle = packet->leftJoystickY;
+  des->roll = packet->leftJoystickX;
+  des->pitch = packet->rightJoystickY;
+  des->yaw = packet->rightJoystickX;
 }
 
 void transitionModeServos(vehicle_mode_t vehicleMode) {
@@ -140,9 +148,11 @@ void setServos(vehicle_mode_t vehicleMode) {
 
 void sendFlightCommands(FlyCommands *cmds) {
   float cmd;
+  uint8_t range;
   for (uint32_t ch = 0; ch < NUM_FLY_MOTORS; ++ch) {
     cmd = *(&cmds->frontLeft + ch);
-    analogWrite(FLY_MOTOR_PINS[ch], FLY_PWM_MIN + (cmd * FLY_PWM_RANGE));
+    range = FLY_PWM_MAXIMUMS[ch] - FLY_PWM_MINIMUMS[ch];
+    analogWrite(FLY_MOTOR_PINS[ch], FLY_PWM_MINIMUMS[ch] + (cmd * range));
   }
 }
 
@@ -152,4 +162,15 @@ void sendDriveCommands(DriveCommands *cmds) {
     cmd = *(&cmds->left + ch);
     analogWrite(DRIVE_MOTOR_PINS[ch], cmd);
   }
+}
+
+void displayDebugIndicators(void) {
+  bool lowVoltage = readBatteryVoltage() < V_BAT_WARN_THRESH;
+  digitalWrite(LED_BLUE_A_PIN, lowVoltage);
+  digitalWrite(LED_BLUE_B_PIN, lowVoltage);
+}
+
+float readBatteryVoltage(void) {
+  uint32_t batReading = analogRead(V_BAT_PIN);
+  return (batReading * VCC) / (ADC_MAX * V_BAT_DIV_RATIO) - V_BAT_OFFSET;
 }
