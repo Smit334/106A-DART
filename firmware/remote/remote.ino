@@ -13,7 +13,7 @@ void setup() {
   /* Initialize radio to transmit/write */
   radio.begin();
   radio.setPALevel(RF24_PA_HIGH);
-  radio.setChannel(110);
+  radio.setChannel(RADIO_CH);
   radio.openWritingPipe(RADIO_ADDR);
 
   /* Set all non-radio pins to INPUT */
@@ -52,7 +52,6 @@ void loop() {
   radio.write(&packet, sizeof(packet));
   /* Do not delay after sending as vehicle loop time is very fast */
   // delay(100);
-  Serial.println(packet.leftJoystickY);
   // printPacket(&packet);
   // Serial.print("Radio Connected: ");
   // Serial.println(radio.isChipConnected());

@@ -21,6 +21,12 @@ float integral_pitch_prev;
 float error_yaw_prev;
 float integral_roll_prev;
 
+float error_roll_prev;
+float error_pitch_prev;
+
+float GyroX_prev;
+float GyroY_prev;
+
 void initConstants(void) {
   q0 = 1.0f;
   q1 = 0.0f;
@@ -68,7 +74,7 @@ void Madgwick6DOF(IMUData *imu, RPYAngles *angles) {
     q2q2 = q2 * q2;
     q3q3 = q3 * q3;
 
-    //Gradient decent algorithm corrective step
+    //Gradient descent algorithm corrective step
     s0 = _4q0 * q2q2 + _2q2 * ax + _4q0 * q1q1 - _2q1 * ay;
     s1 = _4q1 * q3q3 - _2q3 * ax + 4.0f * q0q0 * q1 - _2q0 * ay - _4q1 + _8q1 * q1q1 + _8q1 * q2q2 + _4q1 * az;
     s2 = 4.0f * q0q0 * q2 + _2q0 * ax + _4q2 * q3q3 - _2q3 * ay - _4q2 + _8q2 * q1q1 + _8q2 * q2q2 + _4q2 * az;
@@ -140,6 +146,50 @@ void controlANGLE(IMUData *imu, RPYAngles *actual, RPYAngles *des, float throttl
   integral_roll_prev = integral_roll;
   //Update pitch variables
   integral_pitch_prev = integral_pitch;
+  //Update yaw variables
+  error_yaw_prev = error_yaw;
+  integral_yaw_prev = integral_yaw;
+}
+
+void controlRATE(IMUData *imu, RPYAngles *des, float throttle, RPYAngles *pid) {
+  //Roll
+  float error_roll = des->roll - imu->gyrX;
+  float integral_roll = integral_roll_prev + error_roll*dt;
+  if (throttle < MIN_THROTTLE) {   //Don't let integrator build if throttle is too low
+    integral_roll = 0;
+  }
+  integral_roll = constrain(integral_roll, -i_limit, i_limit); //Saturate integrator to prevent unsafe buildup
+  float derivative_roll = (error_roll - error_roll_prev)/dt; 
+  pid->roll = .01*(Kp_roll*error_roll + Ki_roll*integral_roll + Kd_roll*derivative_roll); //Scaled by .01 to bring within -1 to 1 range
+
+  //Pitch
+  float error_pitch = des->pitch - imu->gyrY;
+  float integral_pitch = integral_pitch_prev + error_pitch*dt;
+  if (throttle < MIN_THROTTLE) {   //Don't let integrator build if throttle is too low
+    integral_pitch = 0;
+  }
+  integral_pitch = constrain(integral_pitch, -i_limit, i_limit); //Saturate integrator to prevent unsafe buildup
+  float derivative_pitch = (error_pitch - error_pitch_prev)/dt; 
+  pid->pitch = .01*(Kp_pitch*error_pitch + Ki_pitch*integral_pitch + Kd_pitch*derivative_pitch); //Scaled by .01 to bring within -1 to 1 range
+
+  //Yaw, stablize on rate from GyroZ
+  float error_yaw = des->yaw - imu->gyrZ;
+  float integral_yaw = integral_yaw_prev + error_yaw*dt;
+  if (throttle < MIN_THROTTLE) {   //Don't let integrator build if throttle is too low
+    integral_yaw = 0;
+  }
+  integral_yaw = constrain(integral_yaw, -i_limit, i_limit); //Saturate integrator to prevent unsafe buildup
+  float derivative_yaw = (error_yaw - error_yaw_prev)/dt; 
+  pid->yaw = .01*(Kp_yaw*error_yaw + Ki_yaw*integral_yaw + Kd_yaw*derivative_yaw); //Scaled by .01 to bring within -1 to 1 range
+
+  //Update roll variables
+  error_roll_prev = error_roll;
+  integral_roll_prev = integral_roll;
+  GyroX_prev = imu->gyrX;
+  //Update pitch variables
+  error_pitch_prev = error_pitch;
+  integral_pitch_prev = integral_pitch;
+  GyroY_prev = imu->gyrY;
   //Update yaw variables
   error_yaw_prev = error_yaw;
   integral_yaw_prev = integral_yaw;

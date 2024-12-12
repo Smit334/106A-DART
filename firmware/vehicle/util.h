@@ -24,6 +24,7 @@
 #define LOOP_RATE_US 500U
 
 /* IMU parameters */
+#define LPF_BW MPU6050_BAND_5_HZ
 #define GYRO_SCALE MPU6050_RANGE_250_DEG
 #define ACCEL_SCALE MPU6050_RANGE_2_G
 

@@ -10,17 +10,17 @@ const float B_madgwick = 0.04;      //Madgwick filter parameter
 
 //Controller parameters (take note of defaults before modifying!): 
 const float i_limit = 25.0;         //Integrator saturation level, mostly for safety (default 25.0)
-const float maxRoll = 30.0;         //Max roll angle in degrees for angle mode (maximum ~70 degrees), deg/sec for rate mode 
-const float maxPitch = 30.0;        //Max pitch angle in degrees for angle mode (maximum ~70 degrees), deg/sec for rate mode
-const float maxYaw = 160.0;         //Max yaw rate in deg/sec
+const float maxRoll = 10.0;         //Max roll angle in degrees for angle mode (maximum ~70 degrees), deg/sec for rate mode 
+const float maxPitch = 10.0;        //Max pitch angle in degrees for angle mode (maximum ~70 degrees), deg/sec for rate mode
+const float maxYaw = 10.0;         //Max yaw rate in deg/sec
 
-const float Kp_roll = 0.0;          //Roll P-gain - angle mode 
+const float Kp_roll = 30;          //Roll P-gain - angle mode 
 const float Ki_roll = 0.0;          //Roll I-gain - angle mode
 const float Kd_roll = 0.0;         //Roll D-gain - angle mode (has no effect on controlANGLE2)
-const float Kp_pitch = 0.0;         //Pitch P-gain - angle mode
+const float Kp_pitch = 30;         //Pitch P-gain - angle mode
 const float Ki_pitch = 0.0;         //Pitch I-gain - angle mode
 const float Kd_pitch = 0.0;        //Pitch D-gain - angle mode (has no effect on controlANGLE2)
-const float Kp_yaw = 2;           //Yaw P-gain
+const float Kp_yaw = 30;           //Yaw P-gain
 const float Ki_yaw = 0.0;          //Yaw I-gain
 const float Kd_yaw = 0.0;       //Yaw D-gain (be careful when increasing too high, motors will begin to overheat!)
 
@@ -48,6 +48,8 @@ void Madgwick6DOF(IMUData *imu, RPYAngles *angles);
  * can be thought of as 1-D stablized signals. They are mixed to the configuration of the vehicle in controlMixer().
  */
 void controlANGLE(IMUData *imu, RPYAngles *actual, RPYAngles *des, float throttle, RPYAngles *pid);
+
+void controlRATE(IMUData *imu, RPYAngles *des, float throttle, RPYAngles *pid);
 
 /**
  * Mix PID'd RPY/YPR and throttle into motor commands

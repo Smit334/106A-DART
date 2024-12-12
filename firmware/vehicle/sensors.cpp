@@ -8,6 +8,7 @@ Adafruit_MPU6050 imu;
 Adafruit_Sensor *imuAccel;
 Adafruit_Sensor *imuGyro;
 sensors_event_t sensorEvent;
+IMUData *prevImuData;
 
 uint32_t movingAverage(uint32_t value, uint32_t *buffer, uint32_t *accumulator, uint32_t *index) {
   *accumulator -= buffer[*index];         // Remove the oldest entry from the sum
@@ -35,6 +36,7 @@ void initIMU(TwoWire *wire) {
   imu = Adafruit_MPU6050();
 
   imu.begin(MPU6050_I2CADDR_DEFAULT, wire);
+  imu.setFilterBandwidth(LPF_BW);
   imu.setGyroRange(GYRO_SCALE);
   imu.setAccelerometerRange(ACCEL_SCALE);
 
@@ -56,11 +58,11 @@ void readIMU(IMUData *data) {
   imuAccel->getEvent(&sensorEvent);
   data->accX = -sensorEvent.acceleration.x;
   data->accY = -sensorEvent.acceleration.y;
-  data->accZ = sensorEvent.acceleration.z;
+  data->accZ = -sensorEvent.acceleration.z;
 
   imuGyro->getEvent(&sensorEvent);
-  data->gyrX = -sensorEvent.gyro.x;
-  data->gyrY = -sensorEvent.gyro.y;
+  data->gyrX = sensorEvent.gyro.x;
+  data->gyrY = sensorEvent.gyro.y;
   data->gyrZ = sensorEvent.gyro.z;
 }
 

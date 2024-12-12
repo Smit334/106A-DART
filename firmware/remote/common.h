@@ -8,6 +8,7 @@
 #define DRIVE_MODE 0
 #define FLIGHT_MODE 1
 
+#define RADIO_CH 130
 #define RADIO_ADDR 0xE8E8F0F0E1LL
 
 typedef uint8_t vehicle_mode_t;

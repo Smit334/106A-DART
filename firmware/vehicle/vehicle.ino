@@ -5,22 +5,24 @@
 #include <Servo.h>
 
 #include "sensors.h"
+#include "attitude_estimator.h"
 
 extern "C" {
-#include "util.h"
-#include "flightController.h"
-#include "driveController.h"
+  #include "util.h"
+  #include "flightController.h"
+  #include "driveController.h"
 }
 
 IMUData imuData;
 IMUData imuError;
 float ultrasonicInches[NUM_US];
+// AttitudeEstimator position;
 RPYAngles position;
 RPYAngles pid;
 DriveCommands driveCmds;
-DriveCommands nullDriveCmds;
+const DriveCommands nullDriveCmds = {};
 FlyCommands flyCmds;
-FlyCommands nullFlyCmds;
+const FlyCommands nullFlyCmds = {};
 
 RadioPacket packet;
 float throttle;
@@ -53,7 +55,7 @@ void setup() {
   /* Initialize radio (over SPI) */
   radio.begin();
   radio.setPALevel(RF24_PA_HIGH);
-  radio.setChannel(110);
+  radio.setChannel(RADIO_CH);
   radio.openReadingPipe(1, RADIO_ADDR);
   radio.startListening();
 
@@ -88,7 +90,11 @@ void setup() {
 
   setServos(FLIGHT_MODE);
   lastVehicleMode = FLIGHT_MODE;
+
+  currTime = micros();
+  trackLoopTime();
   calibrateAttitude();
+  // position.setMagCalib(0, 0, 0);
   calibrateIMU(&imuError);
 }
 
@@ -102,19 +108,34 @@ void calibrateAttitude() {
   }
 }
 
+uint32_t loopCtr = 0;
+
 void loop() {
   trackLoopTime();
 
   readIMU(&imuData);
   subIMUData(&imuData, &imuError);
   // printIMU(&imuData);
-  Madgwick6DOF(&imuData, &position);
+  // Madgwick6DOF(&imuData, &position);
+  // position.update(dt, imuData.accX, imuData.accY, imuData.accZ, deg2rad(imuData.gyrX), deg2rad(imuData.gyrY), deg2rad(imuData.gyrZ), 0, 0, 0);
+  // if (loopCtr % 100 == 0) {
+  //   Serial.print("PYAW ");
+  //   Serial.println(position.yaw);
+  //   Serial.print("PPITCH ");
+  //   Serial.println(position.pitch);
+  //   Serial.print("PROLL ");
+  //   Serial.println(position.roll);
+  //   Serial.print("LOOP TIME ");
+  //   Serial.println(dt*1e6);
+  // }
+  // loopCtr++;
+
   // Serial.print("PYAW ");
-  // Serial.println(position.yaw);
+  // Serial.println(position.eulerYaw());
   // Serial.print("PPITCH ");
-  // Serial.println(position.pitch);
+  // Serial.println(position.eulerPitch());
   // Serial.print("PROLL ");
-  // Serial.println(position.roll);
+  // Serial.println(position.eulerRoll());
   
   // readAllUltrasonic();
 
@@ -130,7 +151,7 @@ void loop() {
   if (packet.buttonThree || isEmergencyStopped) {
     isEmergencyStopped = true;
     digitalWrite(LED_BLUE_B_PIN, HIGH);
-    sendFlightCommands(&nullFlyCmds);
+    clearFlightMotors();
     sendDriveCommands(&nullDriveCmds);
     clearServos();
     return;
@@ -148,27 +169,28 @@ void loop() {
 
   transitionModeServos(packet.vehicleMode);
   if (packet.vehicleMode == FLIGHT_MODE) {
-    controlANGLE(&imuData, &position, &des, throttle, &pid);
+    controlRATE(&imuData, &des, throttle, &pid);
     controlMixer(&pid, throttle, &flyCmds);
+    constrainFlightCommands(&flyCmds);
     // float control = packet.leftJoystickY < 512 ? 0 : ((packet.leftJoystickY - 512.0f) / 512.0f);
     // flyCmds.frontLeft = control;
     // flyCmds.frontRight = control;
     // flyCmds.backLeft = control;
     // flyCmds.backRight = control;
-    // sendFlightCommands(&flyCmds);
-    Serial.println("COMMANDS");
-    Serial.print("FL: ");
-    Serial.println(flyCmds.frontLeft);
-    Serial.print("FR: ");
-    Serial.println(flyCmds.frontRight);
-    Serial.print("BL: ");
-    Serial.println(flyCmds.backLeft);
-    Serial.print("BR: ");
-    Serial.println(flyCmds.backRight);
+    sendFlightCommands(&flyCmds);
+    // Serial.println("COMMANDS");
+    // Serial.print("FL: ");
+    // Serial.println(flyCmds.frontLeft);
+    // Serial.print("FR: ");
+    // Serial.println(flyCmds.frontRight);
+    // Serial.print("BL: ");
+    // Serial.println(flyCmds.backLeft);
+    // Serial.print("BR: ");
+    // Serial.println(flyCmds.backRight);
     sendDriveCommands(&nullDriveCmds);
   } else {
     tankDrive(packet.leftJoystickY, packet.rightJoystickY, &driveCmds);
-    sendFlightCommands(&nullFlyCmds);
+    clearFlightMotors();
     sendDriveCommands(&driveCmds);
   }
   displayDebugIndicators();
@@ -177,9 +199,9 @@ void loop() {
 
 void decodeRadioPacket(RadioPacket *packet, float *throttle, RPYAngles *des) {
   *throttle = zeroCenteredJoystick(packet->leftJoystickY, LEFT_JS_Y_CTR, true);
-  des->roll = zeroCenteredJoystick(packet->leftJoystickX, LEFT_JS_X_CTR, false) * maxRoll;
+  des->yaw = zeroCenteredJoystick(packet->leftJoystickX, LEFT_JS_X_CTR, false) * maxYaw;
   des->pitch = zeroCenteredJoystick(packet->rightJoystickY, RIGHT_JS_Y_CTR, false) * maxPitch;
-  des->yaw = zeroCenteredJoystick(packet->rightJoystickX, RIGHT_JS_X_CTR, false) * maxYaw;
+  des->roll = zeroCenteredJoystick(packet->rightJoystickX, RIGHT_JS_X_CTR, false) * maxRoll;
 }
 
 inline float zeroCenteredJoystick(uint16_t value, float center, bool strictlyPositive) {
@@ -217,12 +239,28 @@ void clearServos(void) {
   }
 }
 
+void constrainFlightCommands(FlyCommands *cmds) {
+ float maxCmd = max(max(max(cmds->frontLeft, cmds->frontRight), cmds->backLeft), cmds->backRight);
+ if (maxCmd > 1.0f) {
+  cmds->frontLeft /= maxCmd;
+  cmds->frontRight /= maxCmd;
+  cmds->backLeft /= maxCmd;
+  cmds->backRight /= maxCmd;
+ }
+}
+
 void sendFlightCommands(FlyCommands *cmds) {
   float cmd;
   const uint32_t range = MAX_MOTOR_US - MIN_MOTOR_US;
   for (uint32_t ch = 0; ch < NUM_FLY_MOTORS; ++ch) {
     cmd = *(&cmds->frontLeft + ch);
     flyMotorServos[ch].writeMicroseconds(MIN_MOTOR_US + (range * cmd));
+  }
+}
+
+void clearFlightMotors(void) {
+  for (uint32_t ch = 0; ch < NUM_FLY_MOTORS; ++ch) {
+    flyMotorServos[ch].writeMicroseconds(0);
   }
 }
 
