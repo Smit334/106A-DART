@@ -10,9 +10,6 @@
 
 #define RADIO_ADDR 0xE8E8F0F0E1LL
 
-#define LEFT_JOYSTICK_CTR 512
-#define RIGHT_JOYSTICK_CTR 522
-
 typedef uint8_t vehicle_mode_t;
 
 typedef struct {

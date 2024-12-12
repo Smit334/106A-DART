@@ -42,16 +42,56 @@ void initIMU(TwoWire *wire) {
   imuGyro = imu.getGyroSensor();
 }
 
+void calibrateIMU(IMUData *error) {
+  IMUData nextData;
+  uint32_t i;
+  for(i = 0; i < NUM_IMU_CALIBRATION_ITER; i++) {
+    readIMU(&nextData);
+    addIMUData(error, &nextData);
+  }
+  divIMUData(error, NUM_IMU_CALIBRATION_ITER);
+}
+
 void readIMU(IMUData *data) {
   imuAccel->getEvent(&sensorEvent);
-  data->accX = sensorEvent.acceleration.x;
-  data->accY = sensorEvent.acceleration.y;
+  data->accX = -sensorEvent.acceleration.x;
+  data->accY = -sensorEvent.acceleration.y;
   data->accZ = sensorEvent.acceleration.z;
 
   imuGyro->getEvent(&sensorEvent);
-  data->gyrX = sensorEvent.gyro.x;
-  data->gyrY = sensorEvent.gyro.y;
+  data->gyrX = -sensorEvent.gyro.x;
+  data->gyrY = -sensorEvent.gyro.y;
   data->gyrZ = sensorEvent.gyro.z;
+}
+
+void addIMUData(IMUData *a, IMUData *b) {
+  a->accX += b->accX;
+  a->accY += b->accY;
+  a->accZ += b->accZ;
+
+  a->gyrX += b->gyrX;
+  a->gyrY += b->gyrY;
+  a->gyrZ += b->gyrZ;
+}
+
+void subIMUData(IMUData *a, IMUData *b) {
+  a->accX -= b->accX;
+  a->accY -= b->accY;
+  a->accZ -= b->accZ;
+
+  a->gyrX -= b->gyrX;
+  a->gyrY -= b->gyrY;
+  a->gyrZ -= b->gyrZ;
+}
+
+void divIMUData(IMUData *data, uint32_t k) {
+  data->accX /= k;
+  data->accY /= k;
+  data->accZ /= k;
+
+  data->gyrX /= k;
+  data->gyrY /= k;
+  data->gyrZ /= k;
 }
 
 void printIMU(IMUData *data) {

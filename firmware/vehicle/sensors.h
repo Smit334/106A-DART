@@ -15,7 +15,11 @@ uint32_t readUltrasonicAveraged(uint32_t ch);
 uint32_t readUltrasonicRaw(uint32_t ch);
 
 void initIMU(TwoWire *wire);
+void calibrateIMU(IMUData *error);
 void readIMU(IMUData *data);
+void addIMUData(IMUData *a, IMUData *b);
+void subIMUData(IMUData *a, IMUData *b);
+void divIMUData(IMUData *data, uint32_t k);
 void printIMU(IMUData *data);
 
 inline float usToInches(uint32_t us) {

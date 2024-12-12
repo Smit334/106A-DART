@@ -52,7 +52,8 @@ void loop() {
   radio.write(&packet, sizeof(packet));
   /* Do not delay after sending as vehicle loop time is very fast */
   // delay(100);
+  Serial.println(packet.leftJoystickY);
   // printPacket(&packet);
-  // Serial.print("Radio Connected: ")
+  // Serial.print("Radio Connected: ");
   // Serial.println(radio.isChipConnected());
 }

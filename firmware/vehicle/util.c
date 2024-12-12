@@ -6,7 +6,7 @@ uint32_t prevTime;
 
 const uint32_t FLY_MOTOR_PINS[NUM_FLY_MOTORS] = { 0, 3, 1, 2 };
 const uint32_t DRIVE_MOTOR_PINS[NUM_DRIVE_MOTORS] = { 15, 14 };
-const uint32_t TRANSITION_SERVO_PINS[NUM_TSERVO] = { 24, 23 };
+const uint32_t TRANSITION_SERVO_PINS[NUM_TSERVO] = { 25, 23 };
 
 const uint32_t US_TRIG[NUM_US] = { 4, 5, 6, 7, 8 };
 const uint32_t US_ECHO[NUM_US] = { 28, 29, 30, 31, 32 };
@@ -18,5 +18,8 @@ void trackLoopTime(void) {
 }
 
 void limitLoopRate(void) {
-  delayMicroseconds(LOOP_RATE_HZ - (micros() - currTime));
+  uint32_t elapsedLoopTime = micros() - currTime;
+  if (elapsedLoopTime < LOOP_RATE_US) {
+    delayMicroseconds(LOOP_RATE_US - elapsedLoopTime);
+  }
 }

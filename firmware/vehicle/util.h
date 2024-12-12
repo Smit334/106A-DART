@@ -17,23 +17,27 @@
 /* PWM frequency for fly motors */
 #define PWM_FREQ_HZ 490
 
+#define MIN_MOTOR_US 1000
+#define MAX_MOTOR_US 2000
+
 /* Control loop frequency */
-#define LOOP_RATE_HZ 2000
+#define LOOP_RATE_US 500U
 
 /* IMU parameters */
 #define GYRO_SCALE MPU6050_RANGE_250_DEG
 #define ACCEL_SCALE MPU6050_RANGE_2_G
 
 /* Servo angles per vehicle mode */
-#define LEFT_SERVO_FLIGHT_DEG 85
-#define RIGHT_SERVO_FLIGHT_DEG 95
+#define LEFT_SERVO_FLIGHT_DEG 90
+#define RIGHT_SERVO_FLIGHT_DEG 35
 #define LEFT_SERVO_DRIVE_DEG 0
-#define RIGHT_SERVO_DRIVE_DEG 180
+#define RIGHT_SERVO_DRIVE_DEG 130
 
 /* Radio pins */
 #define RADIO_CE_PIN 37
 #define RADIO_CSN_PIN 10
 #define RADIO_IRQ_PIN 38
+#define RADIO_RX_TIMEOUT_MS 1000
 
 #define I2C_SCL 16
 #define I2C_SDA 17
@@ -52,6 +56,13 @@
 #define VCC 3.3f
 #define ADC_MAX 1023.0f
 
+#define LEFT_JS_X_CTR 512.0f
+#define LEFT_JS_Y_CTR 512.0f
+#define RIGHT_JS_X_CTR 512.0f
+#define RIGHT_JS_Y_CTR 522.0f
+
+#define NUM_IMU_CALIBRATION_ITER 500
+
 /* Stores data returned from IMU */
 typedef struct {
   float accX;
@@ -64,9 +75,9 @@ typedef struct {
 
 /* General RPY/YPR float values */
 typedef struct {
-  uint32_t yaw;
-  uint32_t pitch;
-  uint32_t roll;
+  float yaw;
+  float pitch;
+  float roll;
 } RPYAngles;
 
 /* Flight motor control values, float range [0, 1] */
