@@ -64,6 +64,9 @@
 
 #define NUM_IMU_CALIBRATION_ITER 500
 
+#define AUTO_FLIGHT_TIMEOUT_MS 2000
+#define AUTO_TRANSITION_DELAY_MS 1000
+
 /* Stores data returned from IMU */
 typedef struct {
   float accX;

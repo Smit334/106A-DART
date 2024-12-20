@@ -15,14 +15,14 @@ extern "C" {
 
 IMUData imuData;
 IMUData imuError;
-float ultrasonicInches[NUM_US];
+float ultrasonicCentimeters[NUM_US];
 // AttitudeEstimator position;
 RPYAngles position;
 RPYAngles pid;
 DriveCommands driveCmds;
-const DriveCommands nullDriveCmds = {};
+DriveCommands nullDriveCmds = {};
 FlyCommands flyCmds;
-const FlyCommands nullFlyCmds = {};
+FlyCommands nullFlyCmds = {};
 
 RadioPacket packet;
 float throttle;
@@ -30,6 +30,7 @@ RPYAngles des;
 vehicle_mode_t lastVehicleMode;
 bool isEmergencyStopped;
 unsigned long radioRxStartTime;
+uint32_t autoFlightStartTimeMs;
 
 RF24 radio(RADIO_CE_PIN, RADIO_CSN_PIN);
 Servo transitionServos[NUM_TSERVO];
@@ -93,9 +94,12 @@ void setup() {
 
   currTime = micros();
   trackLoopTime();
-  calibrateAttitude();
+
+  Serial.println("START CALIBRATION");
+  // calibrateAttitude();
   // position.setMagCalib(0, 0, 0);
   calibrateIMU(&imuError);
+  Serial.println("END CALIBRATION");
 }
 
 void calibrateAttitude() {
@@ -119,12 +123,12 @@ void loop() {
   // Madgwick6DOF(&imuData, &position);
   // position.update(dt, imuData.accX, imuData.accY, imuData.accZ, deg2rad(imuData.gyrX), deg2rad(imuData.gyrY), deg2rad(imuData.gyrZ), 0, 0, 0);
   // if (loopCtr % 100 == 0) {
-  //   Serial.print("PYAW ");
-  //   Serial.println(position.yaw);
-  //   Serial.print("PPITCH ");
-  //   Serial.println(position.pitch);
-  //   Serial.print("PROLL ");
-  //   Serial.println(position.roll);
+    // Serial.print("PYAW ");
+    // Serial.println(position.yaw);
+    // Serial.print("PPITCH ");
+    // Serial.println(position.pitch);
+    // Serial.print("PROLL ");
+    // Serial.println(position.roll);
   //   Serial.print("LOOP TIME ");
   //   Serial.println(dt*1e6);
   // }
@@ -136,18 +140,22 @@ void loop() {
   // Serial.println(position.eulerPitch());
   // Serial.print("PROLL ");
   // Serial.println(position.eulerRoll());
-  
-  // readAllUltrasonic();
 
   // Serial.println(radio.isChipConnected());
+  // ultrasonicCentimeters[US_FRONT_IDX] = usToCentimeters(readUltrasonicAveraged(US_FRONT_IDX));
+  // Serial.println(ultrasonicCentimeters[US_FRONT_IDX]);
+  
+  displayDebugIndicators();
   radioRxStartTime = millis();
-  while (!radio.available()) {
+  while ((!radio.available() || !radio.isChipConnected()) && !isEmergencyStopped) {
     if ((millis() - radioRxStartTime) > RADIO_RX_TIMEOUT_MS) {
       isEmergencyStopped = true;
       break;
     }
   }
   radio.read(&packet, sizeof(packet));
+  // printPacket(&packet);
+  // Serial.println(usToCentimeters(readUltrasonicAveraged(US_FRONT_IDX)));
   if (packet.buttonThree || isEmergencyStopped) {
     isEmergencyStopped = true;
     digitalWrite(LED_BLUE_B_PIN, HIGH);
@@ -158,7 +166,7 @@ void loop() {
   } else {
     digitalWrite(LED_BLUE_B_PIN, LOW);
   }
-  // printPacket(&packet);
+  
   decodeRadioPacket(&packet, &throttle, &des);
   // Serial.print("YAW ");
   // Serial.println(des.yaw);
@@ -167,7 +175,51 @@ void loop() {
   // Serial.print("ROLL ");
   // Serial.println(des.roll);
 
-  transitionModeServos(packet.vehicleMode);
+  if (packet.isAutoMode) {
+    autoMode();
+  } else {
+    teleopMode();
+  }
+  limitLoopRate();
+}
+
+void autoMode(void) {
+  // readAllUltrasonic();
+  ultrasonicCentimeters[US_FRONT_IDX] = usToCentimeters(readUltrasonicAveraged(US_FRONT_IDX));
+  if (lastVehicleMode == FLIGHT_MODE) {
+    uint32_t autoTimeElapsed = millis() - autoFlightStartTimeMs;
+    if (autoTimeElapsed < AUTO_FLIGHT_TIMEOUT_MS) {
+      transitionModeServos(FLIGHT_MODE, true);
+      flyCmds.backLeft = 0.2f;
+      flyCmds.backRight = 0.2f;
+      flyCmds.frontLeft = 0.3f;
+      flyCmds.frontRight = 0.3f;
+      sendFlightCommands(&flyCmds);
+      sendDriveCommands(&nullDriveCmds);
+    } else {
+      clearFlightMotors();
+      delay(AUTO_TRANSITION_DELAY_MS);
+      transitionModeServos(DRIVE_MODE, true);
+    }
+    sendDriveCommands(&nullDriveCmds);
+  } else if (lastVehicleMode == DRIVE_MODE) {
+    transitionModeServos(DRIVE_MODE, true);
+    if (ultrasonicCentimeters[US_FRONT_IDX] >= FRONT_OBSTACLE_THRESH_CM) {
+      driveCmds.left = 255;
+      driveCmds.right = 255;
+      sendDriveCommands(&driveCmds);
+      clearFlightMotors();
+    } else {
+      sendDriveCommands(&nullDriveCmds);
+      transitionModeServos(FLIGHT_MODE, true);
+      delay(AUTO_TRANSITION_DELAY_MS);
+      autoFlightStartTimeMs = millis();
+    }
+  }
+}
+
+void teleopMode(void) {
+  transitionModeServos(packet.vehicleMode, false);
   if (packet.vehicleMode == FLIGHT_MODE) {
     controlRATE(&imuData, &des, throttle, &pid);
     controlMixer(&pid, throttle, &flyCmds);
@@ -178,23 +230,23 @@ void loop() {
     // flyCmds.backLeft = control;
     // flyCmds.backRight = control;
     sendFlightCommands(&flyCmds);
-    // Serial.println("COMMANDS");
-    // Serial.print("FL: ");
-    // Serial.println(flyCmds.frontLeft);
-    // Serial.print("FR: ");
-    // Serial.println(flyCmds.frontRight);
-    // Serial.print("BL: ");
-    // Serial.println(flyCmds.backLeft);
-    // Serial.print("BR: ");
-    // Serial.println(flyCmds.backRight);
-    sendDriveCommands(&nullDriveCmds);
+    // delayMicroseconds(100000);
+      // Serial.println("COMMANDS");
+      // Serial.print("FL: ");
+      // Serial.println(flyCmds.frontLeft);
+      // Serial.print("FR: ");
+      // Serial.println(flyCmds.frontRight);
+      // Serial.print("BL: ");
+      // Serial.println(flyCmds.backLeft);
+      // Serial.print("BR: ");
+      // Serial.println(flyCmds.backRight);
+      // sendDriveCommands(&nullDriveCmds);
+    // delayMicroseconds(100000);
   } else {
     tankDrive(packet.leftJoystickY, packet.rightJoystickY, &driveCmds);
     clearFlightMotors();
     sendDriveCommands(&driveCmds);
   }
-  displayDebugIndicators();
-  limitLoopRate();
 }
 
 void decodeRadioPacket(RadioPacket *packet, float *throttle, RPYAngles *des) {
@@ -211,12 +263,12 @@ inline float zeroCenteredJoystick(uint16_t value, float center, bool strictlyPos
 void readAllUltrasonic(void) {
   uint32_t ch;
   for (ch = 0; ch < NUM_US; ++ch) {
-    ultrasonicInches[ch] = usToInches(readUltrasonicAveraged(ch));
+    ultrasonicCentimeters[ch] = usToCentimeters(readUltrasonicAveraged(ch));
   }
 }
 
-void transitionModeServos(vehicle_mode_t vehicleMode) {
-  if (lastVehicleMode != vehicleMode) {
+void transitionModeServos(vehicle_mode_t vehicleMode, bool override) {
+  if (override || lastVehicleMode != vehicleMode) {
     setServos(vehicleMode);
     lastVehicleMode = vehicleMode;
   }

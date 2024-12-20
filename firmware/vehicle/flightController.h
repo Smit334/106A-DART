@@ -14,15 +14,15 @@ const float maxRoll = 10.0;         //Max roll angle in degrees for angle mode (
 const float maxPitch = 10.0;        //Max pitch angle in degrees for angle mode (maximum ~70 degrees), deg/sec for rate mode
 const float maxYaw = 10.0;         //Max yaw rate in deg/sec
 
-const float Kp_roll = 30;          //Roll P-gain - angle mode 
+const float Kp_roll = 5;          //Roll P-gain - angle mode 
 const float Ki_roll = 0.0;          //Roll I-gain - angle mode
-const float Kd_roll = 0.0;         //Roll D-gain - angle mode (has no effect on controlANGLE2)
-const float Kp_pitch = 30;         //Pitch P-gain - angle mode
+const float Kd_roll = 2;         //Roll D-gain - angle mode (has no effect on controlANGLE2)
+const float Kp_pitch = 5;         //Pitch P-gain - angle mode
 const float Ki_pitch = 0.0;         //Pitch I-gain - angle mode
-const float Kd_pitch = 0.0;        //Pitch D-gain - angle mode (has no effect on controlANGLE2)
-const float Kp_yaw = 30;           //Yaw P-gain
+const float Kd_pitch = 2;        //Pitch D-gain - angle mode (has no effect on controlANGLE2)
+const float Kp_yaw = 5;           //Yaw P-gain
 const float Ki_yaw = 0.0;          //Yaw I-gain
-const float Kd_yaw = 0.0;       //Yaw D-gain (be careful when increasing too high, motors will begin to overheat!)
+const float Kd_yaw = 2;       //Yaw D-gain (be careful when increasing too high, motors will begin to overheat!)
 
 /** Initialize flight controller constants. */
 void initConstants(void);
